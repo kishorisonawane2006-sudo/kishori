@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-navy: #0F4C81;
+  --color-trust-deep: #0369A1;
+  --color-trust-sky: #0284C7;
+  --color-savings-green: #059669;
+  --color-savings-light: #10B981;
+  --color-savings-surface: #ECFDF5;
+  --color-rx-amber: #D97706;
+  --color-rx-amber-light: #FEF3C7;
+  --color-danger-red: #DC2626;
+  --color-danger-surface: #FEF2F2;
+  --color-tenant-indigo: #4F46E5;
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-variant: #d3e4fe;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-subtle: #F1F5F9;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-border-divider: #E2E8F0;
+  --color-primary: #006194;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #007bb9;
+  --color-on-primary-container: #fdfcff;
+  --color-secondary-container: #82f5c1;
+  --color-on-secondary-container: #00714e;
+  --color-secondary-fixed: #85f8c4;
+  --color-on-secondary-fixed: #002114;
+  --color-error-container: #ffdad6;
+  --color-error: #ba1a1a;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #3f4850;
+
+  --spacing-space-2xs: 0.25rem;
+  --spacing-space-xs: 0.5rem;
+  --spacing-space-sm: 0.75rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2rem;
+  --spacing-space-2xl: 3rem;
+  --spacing-margin-mobile: 1rem;
+
+  --font-headline: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: "Inter", sans-serif;
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, .font-headline-lg, .font-headline-sm, .font-price-headline {
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+}
+
+/* Material symbol utilities */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Hide scrollbar for mobile pills while keeping horizontal scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, nav, .print\:hidden {
+    display: none !important;
+  }
+}
+

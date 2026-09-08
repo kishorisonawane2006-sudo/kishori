@@ -1,0 +1,6 @@
+{
+  "name": "MediGeneric",
+  "description": "Multi-tenant generic medicine store, price comparison marketplace, and pharmacy SaaS operations portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
