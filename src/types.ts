@@ -818,3 +818,330 @@ export interface B2bCreditAccount {
   creditRating: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'Unrated';
   lastReviewedAt: string;
 }
+
+// =============================================================================
+// PHASE 4: Pan-National Scale, Insurance Adjudication & Microservice Decomposition
+// Target: v4.0.0  |  Workstreams: NCPDP Insurance, Hub Logistics, Event-Driven Microservices
+// =============================================================================
+
+// ─── Workstream 5.1: Real-Time Insurance Adjudication ────────────────────────
+
+export type ClaimStatus =
+  | 'Draft'
+  | 'Submitted'
+  | 'Adjudicating'
+  | 'Approved'
+  | 'Partially_Approved'
+  | 'Denied'
+  | 'Appeal_Pending'
+  | 'Appeal_Approved'
+  | 'Appeal_Denied'
+  | 'Paid';
+
+export type DenialReasonCode =
+  | 'NDC_NOT_COVERED'
+  | 'REFILL_TOO_SOON'
+  | 'PLAN_LIMITATIONS_EXCEEDED'
+  | 'PRIOR_AUTHORIZATION_REQUIRED'
+  | 'PATIENT_NOT_ELIGIBLE'
+  | 'DRUG_DRUG_INTERACTION_FLAG'
+  | 'PRESCRIBER_NOT_ENROLLED'
+  | 'DUPLICATE_CLAIM';
+
+export interface TpaProvider {
+  id: string;
+  name: string;
+  /** NCPDP BIN — 6-digit Bank Identification Number */
+  rxBin: string;
+  /** Processor Control Number */
+  rxPcn: string;
+  supportedPlanTypes: string[];
+  adjudicationEndpoint: string;
+  averageResponseMs: number;
+  isActive: boolean;
+  coverageStates: string[];
+}
+
+export interface NcpdpClaimRequest {
+  /** NCPDP Transaction Code: B1 = Billing, B3 = Reversal, E1 = Eligibility */
+  transactionCode: 'B1' | 'B3' | 'E1';
+  /** Pharmacy NPI number */
+  pharmacyNpi: string;
+  /** Dispensing pharmacy DEA number */
+  pharmacyDea: string;
+  /** Patient's insurance RxBIN */
+  rxBin: string;
+  /** Patient's insurance RxPCN */
+  rxPcn: string;
+  /** Patient's group number */
+  rxGroup: string;
+  /** Patient's member ID */
+  memberId: string;
+  /** NDC-11 drug code */
+  ndc11: string;
+  /** Quantity dispensed */
+  quantityDispensed: number;
+  /** Days supply */
+  daysSupply: number;
+  /** Drug cost submitted (ingredient cost + dispensing fee) */
+  submittedIngredientCost: number;
+  /** Usual and Customary (U&C) price */
+  usualAndCustomaryPrice: number;
+  prescriberId: string;
+  dateOfService: string;
+  orderId?: string;
+  patientId?: string;
+}
+
+export interface CoPayCalculation {
+  claimId: string;
+  patientId: string;
+  genericSalt: string;
+  brandReferenceCost: number;
+  genericIngredientCost: number;
+  /** Plan-determined copay amount */
+  patientCopayAmount: number;
+  /** Insurer reimbursement portion */
+  insurerReimbursementAmount: number;
+  /** Platform dispensing fee */
+  dispensingFee: number;
+  /** Net amount pharmacy receives */
+  pharmacyReimbursement: number;
+  /** Copay as percentage of brand reference */
+  copayPercent: number;
+  formularyTier: 'Tier1_Generic' | 'Tier2_Preferred' | 'Tier3_NonPreferred' | 'Tier4_Specialty';
+  priorAuthRequired: boolean;
+  calculatedAt: string;
+  /** Calculation latency in ms — Quality Gate: < 3,000ms */
+  latencyMs: number;
+}
+
+export interface InsuranceClaim {
+  id: string;
+  claimNumber: string;
+  patientId: string;
+  patientName: string;
+  orderId: string;
+  tpaProviderId: string;
+  tpaProviderName: string;
+  request: NcpdpClaimRequest;
+  coPayCalculation?: CoPayCalculation;
+  status: ClaimStatus;
+  submittedAt: string;
+  adjudicatedAt?: string;
+  paidAt?: string;
+  denialReasonCode?: DenialReasonCode;
+  denialDescription?: string;
+  appealNote?: string;
+  appealSubmittedAt?: string;
+  /** Actual adjudication latency in ms */
+  adjudicationLatencyMs?: number;
+}
+
+export interface TpaBatchReconciliation {
+  batchId: string;
+  tpaProviderId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalClaims: number;
+  approvedClaims: number;
+  deniedClaims: number;
+  totalInsurancePayout: number;
+  totalPatientCopay: number;
+  totalDispensingFees: number;
+  netPharmacyRevenue: number;
+  processedAt: string;
+}
+
+// ─── Workstream 5.2: Pan-National Hub-and-Spoke Logistics ────────────────────
+
+export type HubTier = 'Tier1_Metro' | 'Tier2_Regional' | 'Tier3_Distribution';
+
+export interface HubWarehouse {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  tier: HubTier;
+  latitude: number;
+  longitude: number;
+  /** Total storage capacity in cubic meters */
+  capacityCubicMeters: number;
+  /** Cold storage capacity (cubic meters) */
+  coldStorageCapacityCubicMeters: number;
+  /** Current utilisation percentage 0–100 */
+  utilisationPercent: number;
+  /** Connected retail branch count */
+  branchesServed: number;
+  /** Average replenishment cycle time in hours */
+  avgReplenishmentCycleHours: number;
+  activeSkus: number;
+  isActive: boolean;
+  /** Drone corridor IDs served by this hub */
+  droneCorridorIds: string[];
+}
+
+export interface DemandForecast {
+  hubId: string;
+  genericSalt: string;
+  forecastPeriodDays: number;
+  /** Historical weekly velocity (units/week) */
+  historicalWeeklyVelocity: number;
+  /** Seasonality multiplier (1.0 = baseline) */
+  seasonalityMultiplier: number;
+  /** Disease incidence trend adjustment */
+  diseaseIncidenceAdjustment: number;
+  /** Forecasted units needed for the period */
+  forecastedUnits: number;
+  /** Current stock at hub */
+  currentStock: number;
+  /** Recommended replenishment quantity */
+  replenishmentQuantity: number;
+  /** Confidence score 0–1 */
+  confidenceScore: number;
+  forecastedAt: string;
+  algorithm: 'exponential_smoothing' | 'holt_winters' | 'moving_average' | 'ml_ensemble';
+}
+
+export interface ReplenishmentOrder {
+  id: string;
+  hubId: string;
+  hubName: string;
+  destinationBranchId: string;
+  destinationBranchName: string;
+  genericSalt: string;
+  quantity: number;
+  priorityLevel: 'Critical' | 'High' | 'Standard';
+  scheduledDispatchAt: string;
+  estimatedArrivalAt: string;
+  status: 'Scheduled' | 'Dispatched' | 'In_Transit' | 'Delivered';
+  isColdChain: boolean;
+}
+
+export type DroneStatus = 'Available' | 'On_Mission' | 'Charging' | 'Maintenance';
+
+export interface DroneCorridor {
+  id: string;
+  name: string;
+  originHubId: string;
+  originCity: string;
+  destinationZone: string;
+  distanceMiles: number;
+  /** Maximum payload in kg */
+  maxPayloadKg: number;
+  /** Average flight time in minutes */
+  avgFlightMins: number;
+  supportsColdChain: boolean;
+  /** Operating altitude in feet */
+  altitudeFeet: number;
+  isActive: boolean;
+  regulatoryApproval: 'FAA_Part_135' | 'DGCA_RPAS' | 'Pending';
+}
+
+export interface DroneDelivery {
+  id: string;
+  corridorId: string;
+  corridorName: string;
+  orderId: string;
+  patientAddress: string;
+  payloadDescription: string;
+  payloadWeightKg: number;
+  isColdChain: boolean;
+  droneId: string;
+  status: DroneStatus | 'Delivered' | 'Failed';
+  dispatchedAt: string;
+  estimatedArrivalAt: string;
+  deliveredAt?: string;
+  telemetryUrl?: string;
+}
+
+export interface CityExpansion {
+  cityName: string;
+  state: string;
+  tier: 'Tier1_Metro' | 'Tier2_City' | 'Tier3_Town';
+  population: number;
+  launchStatus: 'Live' | 'Soft_Launch' | 'Planned' | 'Announced';
+  launchDate: string;
+  activePharmacies: number;
+  activePatients: number;
+  monthlyGmv: number;
+  hubWarehouseId?: string;
+}
+
+// ─── Workstream 5.3: Event-Driven Microservice Decomposition ─────────────────
+
+export type DomainEventType =
+  | 'OrderPlaced'
+  | 'RxVerified'
+  | 'TemperatureBreached'
+  | 'PayoutSettled'
+  | 'BuyBoxUpdated'
+  | 'InventoryLow'
+  | 'ClaimApproved'
+  | 'ClaimDenied'
+  | 'DroneDispatched'
+  | 'ReplenishmentTriggered';
+
+export interface EventMessage {
+  id: string;
+  topic: string;
+  eventType: DomainEventType;
+  partitionKey: string;
+  payload: Record<string, unknown>;
+  producedAt: string;
+  /** Consumer group acknowledgements */
+  acknowledgedBy: string[];
+  retryCount: number;
+  isDeadLetter: boolean;
+}
+
+export interface KafkaTopic {
+  name: string;
+  partitions: number;
+  replicationFactor: number;
+  retentionMs: number;
+  subscribedServices: string[];
+  messageCount: number;
+  bytesPerSec: number;
+}
+
+export type ServiceStatus = 'Healthy' | 'Degraded' | 'Unhealthy' | 'Deploying' | 'Unknown';
+export type ServiceTier = 'Edge' | 'Core' | 'Data' | 'Infrastructure';
+export type DeploymentTarget = 'Kubernetes' | 'Lambda' | 'ECS' | 'CloudRun';
+
+export interface MicroserviceHealth {
+  serviceId: string;
+  serviceName: string;
+  version: string;
+  tier: ServiceTier;
+  status: ServiceStatus;
+  /** Requests per second (current) */
+  requestsPerSec: number;
+  /** p99 latency in milliseconds */
+  p99LatencyMs: number;
+  /** p50 latency in milliseconds */
+  p50LatencyMs: number;
+  errorRate: number;
+  cpuPercent: number;
+  memoryPercent: number;
+  replicaCount: number;
+  deploymentTarget: DeploymentTarget;
+  region: string;
+  lastDeployedAt: string;
+  uptime: string;
+  /** Phase 4 Quality Gate: platform must sustain 100,000 req/s */
+  sustainedThroughputCapacity: number;
+  technology: string;
+}
+
+export interface ConcurrencySimResult {
+  targetRps: number;
+  achievedRps: number;
+  p50LatencyMs: number;
+  p99LatencyMs: number;
+  errorRatePercent: number;
+  /** Phase 4 gate: p99 < 100ms */
+  slaCompliant: boolean;
+  simulatedAt: string;
+  durationMs: number;
+}
