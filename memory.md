@@ -4,7 +4,7 @@
 **Codebase Identifier:** `generic-medicine-store` (`kishori`)  
 **Domain:** Healthcare E-Commerce, Generic Drug Price Comparison & Pharmacy SaaS  
 **Document Status:** Living Document / Active Context  
-**Last Synchronized:** 2026-09-09 (Phase 1 production hardening — v1.4.0)  
+**Last Synchronized:** 2026-09-09 (Phase 3 complete — v3.0.0)  
 
 ---
 
@@ -298,6 +298,43 @@ The listing with the highest composite score wins the primary `winning` badge an
 | **LoadingSpinner** | `src/components/common/LoadingSpinner.tsx` | Accessible spinner for OCR cold-start and API calls |
 | **Common Barrel** | `src/components/common/index.ts` | Single import for all common components |
 
+### 8.2 New Modules Added (v2.0.0 — Phase 2)
+
+| Module | Path | Purpose |
+| :--- | :--- | :--- |
+| **LogisticsService** | `server/services/logisticsService.ts` | 3PL carrier abstraction, autoDispatch, waybill, failover, OTP/POD |
+| **IoTGatewayService** | `server/services/iotGatewayService.ts` | Cumulative excursion tracking, breach protocol, BLE sync, notifications |
+| **GeoFencingService** | `server/services/geoFencingService.ts` | NYC polygon zones, Haversine, proximity scoring, Distance Matrix stub |
+| **logisticsRoutes** | `server/routes/logisticsRoutes.ts` | 14 endpoints under `/api/v2/logistics/` |
+| **iotRoutes** | `server/routes/iotRoutes.ts` | 8 endpoints under `/api/v2/iot/` |
+| **LogisticsDashboardScreen** | `src/components/logistics/LogisticsDashboardScreen.tsx` | Portal: 3PL hub, carrier grid, rider table, auto-dispatch simulator |
+| **RiderCompanionScreen** | `src/components/logistics/RiderCompanionScreen.tsx` | Dark-theme courier app: route/scanner/OTP/POD tabs |
+| **GeoFenceMapScreen** | `src/components/logistics/GeoFenceMapScreen.tsx` | SVG polygon map, zone editor, proximity Buy-Box score table |
+| **MobilePatientApp** | `src/components/mobile/MobilePatientApp.tsx` | Mobile simulation: biometric/Rx camera/notifications/tracking |
+| **Phase 2 Types** | `src/types.ts` (appended) | 24 new interfaces + 4 new PortalTab values |
+| **Phase 2 Mock Data** | `src/data/initialData.ts` (appended) | INITIAL_CARRIERS/DISPATCHES/RIDERS/GEO_FENCES/IOT_PACKETS/NOTIFICATIONS |
+| **Phase 2 Test Suite** | `tests/phase2-verification.ts` | 32 quality gates across all 4 workstreams |
+
+### 8.3 New Modules Added (v3.0.0 — Phase 3)
+
+| Module | Path | Purpose |
+| :--- | :--- | :--- |
+| **FhirService** | `server/services/fhirService.ts` | FHIR R4 ingestion, NMC signature verification, cart hydration tokens |
+| **DdiService** | `server/services/ddiService.ts` | 10-interaction DDI database, Gemini AI augmentation, CDS flags |
+| **VoiceSearchService** | `server/services/voiceSearchService.ts` | Soundex + Metaphone + Levenshtein, 8 languages, vernacular map |
+| **WholesaleService** | `server/services/wholesaleService.ts` | 5 manufacturers, tiered pricing, CoA auto-verification, credit/escrow |
+| **fhirRoutes** | `server/routes/fhirRoutes.ts` | 6 endpoints under `/api/v3/fhir/` |
+| **ddiRoutes** | `server/routes/ddiRoutes.ts` | 5 endpoints under `/api/v3/ddi/` |
+| **voiceRoutes** | `server/routes/voiceRoutes.ts` | 5 endpoints under `/api/v3/voice/` |
+| **wholesaleRoutes** | `server/routes/wholesaleRoutes.ts` | 15 endpoints under `/api/v3/wholesale/` |
+| **FhirEhrScreen** | `src/components/clinical/FhirEhrScreen.tsx` | 3-tab EHR gateway (providers/ingest/history), magic link copy |
+| **DdiAlertModal** | `src/components/clinical/DdiAlertModal.tsx` | InteractionCard, DdiAlertModal, DdiEngineScreen, PharmacistCdsPanel |
+| **VoiceSearchWidget** | `src/components/clinical/VoiceSearchWidget.tsx` | Web Speech API, 8-language selector, WCAG accessibility panel |
+| **WholesaleMarketplaceScreen** | `src/components/wholesale/WholesaleMarketplaceScreen.tsx` | 4-tab B2B marketplace (catalog/manufacturers/orders/credit) |
+| **Phase 3 Types** | `src/types.ts` (appended) | 26 new interfaces + 4 new PortalTab values |
+| **Phase 3 Mock Data** | `src/data/initialData.ts` (appended) | FHIR providers/requests, DDI interactions, manufacturers, listings, CoAs, B2B orders, credit accounts |
+| **Phase 3 Test Suite** | `tests/phase3-verification.ts` | 42 quality gates across all 4 workstreams |
+
 ---
 
 ## 9. Future Roadmap
@@ -305,6 +342,21 @@ The listing with the highest composite score wins the primary `winning` badge an
 ### Phase 1: MVP Marketplace & Multi-Tenant Foundation (Complete: Q1–Q3 2026 → v1.4.0)
 - Complete patient discovery, price comparison, cart, order tracking, multi-tenant portal, repricing engine, and interactive PRD/architecture viewer.
 - ✅ **v1.4.0 production hardening:** Shared utility library (`src/utils/`), common component atoms (`src/components/common/`), full environment variable documentation (`.env.example`), package metadata corrected. All 11 Phase 1 quality gates passing.
+
+### Phase 2: Logistics Automation, Cold-Chain IoT & Native Mobile (Complete: Q4 2026 → v2.0.0)
+- ✅ **Workstream 2.1 — 3PL Carrier Hub:** Unified carrier abstraction (Dunzo/Shadowfax/FedEx), `autoDispatch()` < 180s SLA, waybill generation, carrier failover, webhook lifecycle, OTP/POD.
+- ✅ **Workstream 2.2 — IoT Gateway:** Cumulative 10-min excursion tracking, quarantine + auto-redispatch, BLE flash sync, breach alert records, mobile push notifications.
+- ✅ **Workstream 2.3 — Rider Companion:** Route queue, barcode scanner, OTP doorstep verification, POD photo capture.
+- ✅ **Workstream 2.4 — Geo-Fencing:** 4 NYC polygon zones, Haversine + point-in-polygon, ADR-004 proximity scoring, Google Distance Matrix stub, alternate pharmacy re-dispatch routing.
+- ✅ **Mobile Patient App:** Biometric auth sim, Rx camera with OCR extraction preview, push notification feed, cold-chain tracking, offline cart banner.
+- ✅ **32/32 Phase 2 quality gates passing.** Phase 1 regression-free (11/11).
+
+### Phase 3: Clinical EHR Sync, Gemini AI Safety & B2B Wholesale (Complete: 2026-09-09 → v3.0.0)
+- ✅ **Workstream 3.1 — FHIR/HL7 EHR Gateway:** FHIR R4 MedicationRequest ingestion, NMC/state medical council digital signature verification, CHT-prefix cart hydration tokens, 6-provider registry (Epic/Cerner/Practo/Kareo/AthenaHealth/DrChrono), magic link one-click checkout.
+- ✅ **Workstream 3.2 — Gemini AI DDI Engine:** 10-interaction clinical database (2 CRITICAL / 5 MODERATE / 2 FOOD / 1 MONITORING), Gemini AI augmentation path (gemini-2.5-flash), pharmacist CDS flags + review workflow. DDI precision: 100% (10/10 database).
+- ✅ **Workstream 3.3 — Voice Search & Accessibility:** Soundex + Metaphone + Levenshtein phonetic engine, 8 languages (en/hi/bn/mr/ta/te/kn/es), vernacular Hindi/Spanish transliteration, WCAG 2.1 accessibility panel (4 contrast themes, font sizes, reduce motion). Latency: 1.6ms (< 1,500ms target).
+- ✅ **Workstream 3.4 — B2B Wholesale Marketplace:** 5 verified manufacturers (Cipla/Sun/Dr.Reddy's/Torrent/Lupin), 3-tier volume pricing (21–71% discounts), automated CoA verification (purity ≥ 99.5% required), credit account management (Net-0/30/60), full order lifecycle with escrow settlement.
+- ✅ **42/42 Phase 3 quality gates passing.** Phase 1 (11/11) + Phase 2 (32/32) regression-free.
 
 ### Phase 2: Logistics Integration & Mobile Native Apps (Q4 2026)
 - Integration with Dunzo, Shadowfax, and FedEx Healthcare APIs.

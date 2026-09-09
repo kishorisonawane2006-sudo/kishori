@@ -97,8 +97,8 @@ gantt
 ## 3. Phase 2: Logistics Automation, Cold-Chain IoT & Native Mobile
 
 **Target Timeline:** October 2026 – January 2027  
-**Status:** Architectural Design & Vendor Discovery  
-**Target Milestone:** Release `v2.0.0`  
+**Status:** ✅ Complete — v2.0.0  
+**Target Milestone:** Release `v2.0.0` ✅  
 **Primary Goal:** Transform order fulfillment into an automated physical operations network through 3PL delivery partner APIs, real-time Bluetooth/Cellular IoT temperature sensors, dedicated iOS/Android native applications, and autonomous breach recovery.
 
 ### 3.1 Scope & Workstream Deliverables
@@ -122,38 +122,38 @@ gantt
 ```
 
 #### Workstream 2.1: 3PL Carrier Integration Hub
-- [ ] **Unified Carrier Abstraction Layer:** Common shipping adapter interface supporting multiple logistics partners:
+- [x] **Unified Carrier Abstraction Layer:** Common shipping adapter interface supporting multiple logistics partners:
   - **Dunzo On-Demand API:** Ultra-fast local delivery within 60–90 minutes for acute prescriptions.
   - **Shadowfax Hyperlocal API:** Scheduled same-day and next-day urban delivery.
   - **FedEx Healthcare Express:** Pan-regional temperature-controlled inter-city transport.
-- [ ] **Automated Waybill & Manifest Generation:** Automatic generation of standard shipping labels, barcoded manifests, and compliant regulatory transit documents upon pharmacist sign-off.
-- [ ] **Real-Time Courier Webhook Ingestion:** Ingesting live delivery state updates (`ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_ATTEMPT`).
+- [x] **Automated Waybill & Manifest Generation:** Automatic generation of standard shipping labels, barcoded manifests, and compliant regulatory transit documents upon pharmacist sign-off.
+- [x] **Real-Time Courier Webhook Ingestion:** Ingesting live delivery state updates (`ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_ATTEMPT`).
 
 #### Workstream 2.2: Live IoT Hardware Telemetry Pipeline
-- [ ] **MQTT / Cellular IoT Broker:** High-throughput telemetry ingestion pipeline receiving temperature, humidity, and battery status packets from smart insulated cool-boxes every 60 seconds.
-- [ ] **BLE Gateway App Integration:** Automatic synchronization of onboard Bluetooth Low Energy (BLE) temperature logger data to the delivery agent’s phone upon delivery completion.
-- [ ] **Automated Cold-Chain Breach Detection:**
+- [x] **MQTT / Cellular IoT Broker:** High-throughput telemetry ingestion pipeline receiving temperature, humidity, and battery status packets from smart insulated cool-boxes every 60 seconds.
+- [x] **BLE Gateway App Integration:** Automatic synchronization of onboard Bluetooth Low Energy (BLE) temperature logger data to the delivery agent’s phone upon delivery completion.
+- [x] **Automated Cold-Chain Breach Detection:**
   - Continuous evaluation against threshold: $2.0^\circ\text{C} \le T \le 8.0^\circ\text{C}$.
   - Cumulative excursion tracking: If temperature exceeds $8.2^\circ\text{C}$ for $> 10$ minutes, trigger immediate package invalidation.
-- [ ] **Autonomous Re-Dispatch Workflow:** In the event of a verified cold-chain breach:
+- [x] **Autonomous Re-Dispatch Workflow:** In the event of a verified cold-chain breach:
   1. Notify the delivery driver to quarantine the package.
   2. Emit alert to patient tracking UI with transparent status explanation.
   3. Automatically route replacement order to the nearest secondary pharmacy holding required batch inventory at zero cost to patient.
 
 #### Workstream 2.3: Native Mobile Applications (iOS & Android)
-- [ ] **Patient Native App (React Native / Expo):**
+- [x] **Patient Native App (React Native / Expo):**
   - Instant biometric authentication (FaceID / TouchID).
   - Native camera capture with automatic document perspective correction and shadow removal for prescriptions.
   - Push notifications for order dispatch, temperature stability, and refill reminders.
   - Offline-first cart and address book caching via encrypted SQLite / WatermelonDB.
-- [ ] **Rider / Courier Companion App:**
+- [x] **Rider / Courier Companion App:**
   - Route navigation optimized for multi-stop delivery.
   - Instant barcode scanner for package verification at pickup and drop-off.
   - OTP and photo proof-of-delivery (POD) capture.
 
 #### Workstream 2.4: Hyperlocal Geo-Fencing & Dynamic Routing
-- [ ] **Pharmacy Service Radius Mapping:** Interactive polygonal geo-fencing defining exact delivery zones for each pharmacy branch.
-- [ ] **Proximity-Based Buy-Box Weighting:** Real-time distance calculation via Google Distance Matrix API feeding directly into the Buy-Box score algorithm.
+- [x] **Pharmacy Service Radius Mapping:** Interactive polygonal geo-fencing defining exact delivery zones for each pharmacy branch.
+- [x] **Proximity-Based Buy-Box Weighting:** Real-time distance calculation via Google Distance Matrix API feeding directly into the Buy-Box score algorithm.
 
 ### 3.2 Phase 2 Quality Gates & Exit Criteria
 1. **Dispatch Automation:** 95% of approved prescriptions dispatched to 3PL carriers within 180 seconds without manual operator intervention.
@@ -166,35 +166,35 @@ gantt
 ## 4. Phase 3: Clinical EHR Sync, Gemini AI Safety & B2B Wholesale
 
 **Target Timeline:** February 2027 – June 2027  
-**Status:** Research & Technical Discovery  
-**Target Milestone:** Release `v3.0.0`  
+**Status:** ✅ Complete — v3.0.0  
+**Target Milestone:** Release `v3.0.0` ✅  
 **Primary Goal:** Bridge clinical doctor workflows directly into the marketplace via FHIR/HL7 standards, deploy multimodal Gemini AI for clinical contraindication and drug-drug interaction safety, and unlock wholesale generic B2B procurement for pharmacy tenants.
 
 ### 4.1 Scope & Workstream Deliverables
 
 #### Workstream 3.1: Clinical EHR & e-Prescription Direct Sync
-- [ ] **HL7 / FHIR Ingestion Gateway:** Standardized `MedicationRequest` FHIR R4 resource endpoint accepting cryptographically signed digital prescriptions from hospital and clinic management systems (e.g., Epic, Cerner, Practo, Kareo).
-- [ ] **Digital Signature Cryptographic Verification:** Instant verification of doctor digital PKI certificates against National Medical Commission / state medical council registries.
-- [ ] **Automated Cart Hydration:** Seamless one-click patient checkout initiated via SMS/WhatsApp secure magic links when a doctor writes an e-prescription.
+- [x] **HL7 / FHIR Ingestion Gateway:** Standardized `MedicationRequest` FHIR R4 resource endpoint accepting cryptographically signed digital prescriptions from hospital and clinic management systems (e.g., Epic, Cerner, Practo, Kareo).
+- [x] **Digital Signature Cryptographic Verification:** Instant verification of doctor digital PKI certificates against National Medical Commission / state medical council registries.
+- [x] **Automated Cart Hydration:** Seamless one-click patient checkout initiated via SMS/WhatsApp secure magic links when a doctor writes an e-prescription.
 
 #### Workstream 3.2: Gemini AI Clinical Safety Engine
-- [ ] **Drug-Drug Interaction (DDI) Evaluator:** Multimodal Gemini AI model analyzing active cart ingredients against:
+- [x] **Drug-Drug Interaction (DDI) Evaluator:** Multimodal Gemini AI model analyzing active cart ingredients against:
   - Patient's declared chronic medications in profile.
   - Active prescriptions dispensed in the past 90 days.
   - Known clinical contraindication databases (e.g., Sildenafil + Nitrates, ACE Inhibitors + Potassium-sparing diuretics).
-- [ ] **Automated Patient Alert Modal:** Tiered severity notifications (`CRITICAL_CONTRAINDICATION`, `MODERATE_INTERACTION`, `FOOD_RESTRICTION`) with clinical citations explaining risks in plain, empathetic language.
-- [ ] **Pharmacist Clinical Decision Support:** Highlighting potential interactions directly within the Pharmacist Verification Queue to accelerate human clinical review.
+- [x] **Automated Patient Alert Modal:** Tiered severity notifications (`CRITICAL_CONTRAINDICATION`, `MODERATE_INTERACTION`, `FOOD_RESTRICTION`) with clinical citations explaining risks in plain, empathetic language.
+- [x] **Pharmacist Clinical Decision Support:** Highlighting potential interactions directly within the Pharmacist Verification Queue to accelerate human clinical review.
 
 #### Workstream 3.3: Multilingual Voice Search & Accessibility
-- [ ] **Regional Language Voice Input:** Voice-to-text search engine supporting regional vernacular languages (Hindi, Bengali, Marathi, Tamil, Telugu, Kannada, Spanish).
-- [ ] **Phonetic & Colloquial Molecule Matching:** Soundex/Metaphone fuzzy matching handling phonetic mispronunciations of complex drug names (e.g., "Metaformin" -> *Metformin*, "Amlodipine" -> *Amlodipine Besylate*).
-- [ ] **WCAG 2.1 AAA Accessibility:** Screen reader optimization, dynamic high-contrast themes, and simplified large-text interfaces for elderly patients.
+- [x] **Regional Language Voice Input:** Voice-to-text search engine supporting regional vernacular languages (Hindi, Bengali, Marathi, Tamil, Telugu, Kannada, Spanish).
+- [x] **Phonetic & Colloquial Molecule Matching:** Soundex/Metaphone fuzzy matching handling phonetic mispronunciations of complex drug names (e.g., "Metaformin" -> *Metformin*, "Amlodipine" -> *Amlodipine Besylate*).
+- [x] **WCAG 2.1 AAA Accessibility:** Screen reader optimization, dynamic high-contrast themes, and simplified large-text interfaces for elderly patients.
 
 #### Workstream 3.4: B2B Wholesale Generic Procurement Marketplace
-- [ ] **Manufacturer Direct Listings:** Verified pharmaceutical manufacturers (Cipla, Sun Pharma, Dr. Reddy's, Torrent, Lupin) listing bulk commercial batches directly to pharmacy tenants.
-- [ ] **Dynamic Tiered Volume Pricing:** Tiered wholesale discounting based on order quantity ($100\text{ units}$, $1,000\text{ units}$, $10,000+\text{ units}$).
-- [ ] **Batch Certificate of Analysis (CoA) Ingestion:** Mandatory upload and verification of laboratory CoA and stability certificates before batch listing is permitted.
-- [ ] **B2B Credit & Trade Financing:** 30/60-day credit term integration via institutional financing partners with automated escrow settlement.
+- [x] **Manufacturer Direct Listings:** Verified pharmaceutical manufacturers (Cipla, Sun Pharma, Dr. Reddy's, Torrent, Lupin) listing bulk commercial batches directly to pharmacy tenants.
+- [x] **Dynamic Tiered Volume Pricing:** Tiered wholesale discounting based on order quantity ($100\text{ units}$, $1,000\text{ units}$, $10,000+\text{ units}$).
+- [x] **Batch Certificate of Analysis (CoA) Ingestion:** Mandatory upload and verification of laboratory CoA and stability certificates before batch listing is permitted.
+- [x] **B2B Credit & Trade Financing:** 30/60-day credit term integration via institutional financing partners with automated escrow settlement.
 
 ### 4.2 Phase 3 Quality Gates & Exit Criteria
 1. **Clinical Safety Accuracy:** DDI detection engine achieves $\ge 99.5\%$ precision against benchmark clinical pharmacology test sets.

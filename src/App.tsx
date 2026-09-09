@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   AppMode,
   PortalTab,
@@ -49,6 +50,18 @@ import { MenuBarDrawer } from './components/MenuBarDrawer';
 import { ArchitectureExplorer } from './components/architecture/ArchitectureExplorer';
 import { PrdViewer } from './components/prd/PrdViewer';
 
+// ── Phase 2: Logistics, IoT & Mobile screens ──────────────────────────────────
+import { LogisticsDashboardScreen } from './components/logistics/LogisticsDashboardScreen';
+import { RiderCompanionScreen } from './components/logistics/RiderCompanionScreen';
+import { GeoFenceMapScreen } from './components/logistics/GeoFenceMapScreen';
+import { MobilePatientApp } from './components/mobile/MobilePatientApp';
+
+// ── Phase 3: Clinical EHR, DDI Engine, Voice Search, B2B Wholesale ───────────
+import { FhirEhrScreen } from './components/clinical/FhirEhrScreen';
+import { DdiEngineScreen } from './components/clinical/DdiAlertModal';
+import { VoiceSearchScreen } from './components/clinical/VoiceSearchWidget';
+import { WholesaleMarketplaceScreen } from './components/wholesale/WholesaleMarketplaceScreen';
+
 export default function App() {
   // Global View Mode (Defaults to patient medicine marketplace for easy discovery)
   const [appMode, setAppMode] = useState<AppMode>('patient');
@@ -70,6 +83,9 @@ export default function App() {
 
   // User State
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(INITIAL_USER);
+
+  // Phase 2: Active rider for companion view
+  const [activeRiderId, setActiveRiderId] = useState<string>('rider-001');
 
   // Shared Marketplace State
   const [tenants, setTenants] = useState<TenantOrganization[]>(INITIAL_TENANTS);
@@ -374,6 +390,73 @@ export default function App() {
                   >
                     <span className="material-symbols-outlined text-[18px]">pill</span>
                   </button>
+                  {/* Phase 2 quick access */}
+                  <div className="w-5 h-px bg-slate-700/80 my-0.5"></div>
+                  <button
+                    onClick={() => setPortalTab('logistics-dashboard')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'logistics-dashboard' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 2: Logistics Dashboard"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">hub</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('geo-fence-zones')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'geo-fence-zones' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 2: Geo-Fence Zones"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">map</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('mobile-patient-app')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'mobile-patient-app' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 2: Mobile Patient App"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">smartphone</span>
+                  </button>
+                  {/* Phase 3 quick access */}
+                  <div className="w-5 h-px bg-slate-700/80 my-0.5"></div>
+                  <button
+                    onClick={() => setPortalTab('fhir-ehr')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'fhir-ehr' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 3: FHIR / EHR Gateway"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">local_hospital</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('ddi-engine')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'ddi-engine' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 3: DDI Engine"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('voice-search')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'voice-search' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 3: Voice Search"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">mic</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('wholesale-marketplace')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'wholesale-marketplace' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 3: B2B Wholesale"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">storefront</span>
+                  </button>
                 </div>
               )}
 
@@ -415,6 +498,41 @@ export default function App() {
                     onAddListing={handleAddListing}
                   />
                 )}
+
+                {/* ── Phase 2: Logistics & IoT Screens ─────────────────── */}
+                {portalTab === 'logistics-dashboard' && (
+                  <LogisticsDashboardScreen
+                    onViewRider={(riderId) => {
+                      setActiveRiderId(riderId);
+                      setPortalTab('rider-companion');
+                    }}
+                  />
+                )}
+
+                {portalTab === 'rider-companion' && (
+                  <RiderCompanionScreen riderId={activeRiderId} />
+                )}
+
+                {portalTab === 'geo-fence-zones' && (
+                  <GeoFenceMapScreen />
+                )}
+
+                {portalTab === 'mobile-patient-app' && (
+                  <div className="flex items-center justify-center p-6 min-h-[600px] bg-slate-100/60">
+                    <div className="w-full max-w-sm shadow-2xl rounded-3xl bg-white overflow-hidden border border-slate-300 flex flex-col" style={{ minHeight: 780 }}>
+                      <MobilePatientApp />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Phase 3: Clinical AI & B2B Wholesale Screens ─────── */}
+                {portalTab === 'fhir-ehr' && <FhirEhrScreen />}
+
+                {portalTab === 'ddi-engine' && <DdiEngineScreen />}
+
+                {portalTab === 'voice-search' && <VoiceSearchScreen />}
+
+                {portalTab === 'wholesale-marketplace' && <WholesaleMarketplaceScreen />}
               </div>
             </div>
           </div>

@@ -13,7 +13,17 @@ export type PortalTab =
   | 'commission-and-payouts'
   | 'audit-logs-and-security'
   | 'tenant-configs'
-  | 'analytics-and-reports';
+  | 'analytics-and-reports'
+  // Phase 2 — Logistics & IoT tabs
+  | 'logistics-dashboard'
+  | 'rider-companion'
+  | 'geo-fence-zones'
+  | 'mobile-patient-app'
+  // Phase 3 — Clinical AI & B2B Wholesale tabs
+  | 'fhir-ehr'
+  | 'ddi-engine'
+  | 'voice-search'
+  | 'wholesale-marketplace';
 
 export type PatientTab = 'discover' | 'price-compare' | 'cart' | 'my-orders' | 'order-history' | 'profile';
 
@@ -462,4 +472,349 @@ export interface MobileNotification {
   createdAt: string;
   /** iOS/Android push token for native delivery */
   pushToken?: string;
+}
+
+// =============================================================================
+// PHASE 3: Clinical EHR Sync, Gemini AI Safety & B2B Wholesale
+// Target: v3.0.0  |  Workstreams: FHIR/HL7, DDI Engine, Voice Search, B2B
+// =============================================================================
+
+// ─── Workstream 3.1: FHIR/HL7 EHR Integration ───────────────────────────────
+
+export type EhrProviderSystem = 'Epic' | 'Cerner' | 'Practo' | 'Kareo' | 'AthenaHealth' | 'DrChrono';
+
+export type FhirSignatureStatus =
+  | 'VERIFIED'
+  | 'PENDING_VERIFICATION'
+  | 'INVALID_CERTIFICATE'
+  | 'EXPIRED_CERTIFICATE'
+  | 'REGISTRY_UNREACHABLE';
+
+export type CartHydrationStatus = 'READY' | 'PENDING_RX_CHECK' | 'MISSING_ITEMS' | 'FAILED';
+
+export interface EhrProvider {
+  id: string;
+  name: EhrProviderSystem;
+  displayName: string;
+  fhirBaseUrl: string;
+  version: 'R4' | 'STU3';
+  supportsDigitalSignature: boolean;
+  connectedHospitals: number;
+  isActive: boolean;
+  logoUrl?: string;
+}
+
+/** FHIR R4 MedicationRequest resource (simplified to domain-relevant fields) */
+export interface FhirMedicationRequest {
+  /** FHIR resourceType — always "MedicationRequest" */
+  resourceType: 'MedicationRequest';
+  id: string;
+  /** FHIR status: active | completed | cancelled */
+  status: 'active' | 'completed' | 'cancelled' | 'entered-in-error';
+  /** FHIR intent: order | proposal | plan */
+  intent: 'order' | 'proposal' | 'plan';
+  medicationCodeableConcept: {
+    coding: Array<{ system: string; code: string; display: string }>;
+    text: string;
+  };
+  subject: { reference: string; display: string };
+  requester: {
+    reference: string;
+    display: string;
+    /** NMC / state medical council registration number */
+    registrationNumber: string;
+    /** PKI certificate thumbprint for digital signature */
+    certificateThumbprint?: string;
+  };
+  authoredOn: string;
+  dosageInstruction: Array<{
+    text: string;
+    timing?: { code?: { text: string } };
+    doseAndRate?: Array<{ doseQuantity?: { value: number; unit: string } }>;
+  }>;
+  dispenseRequest?: {
+    quantity?: { value: number; unit: string };
+    numberOfRepeatsAllowed?: number;
+    validityPeriod?: { start: string; end: string };
+  };
+  /** Digital signature from the EHR system */
+  signature?: {
+    type: Array<{ system: string; code: string; display: string }>;
+    when: string;
+    who: { reference: string };
+    sigFormat: string;
+    data: string;
+  };
+  /** Source EHR provider */
+  ehrProviderId?: string;
+  /** Magic link token for automated cart hydration */
+  cartHydrationToken?: string;
+}
+
+export interface FhirIngestResult {
+  fhirRequestId: string;
+  patientName: string;
+  patientReference: string;
+  doctorName: string;
+  doctorRegistrationNumber: string;
+  ehrProvider: EhrProviderSystem;
+  medications: Array<{
+    genericSalt: string;
+    brandReference: string;
+    dosage: string;
+    quantity: number;
+    isRxRequired: boolean;
+  }>;
+  signatureStatus: FhirSignatureStatus;
+  cartHydrationToken: string;
+  cartHydrationStatus: CartHydrationStatus;
+  ingestedAt: string;
+}
+
+export interface CartHydrationPayload {
+  token: string;
+  patientId: string;
+  cartItems: Array<{
+    genericSalt: string;
+    quantity: number;
+    prescribedDose: string;
+    fhirRequestId: string;
+  }>;
+  magicLinkUrl: string;
+  expiresAt: string;
+  status: CartHydrationStatus;
+}
+
+// ─── Workstream 3.2: Gemini AI Drug-Drug Interaction Engine ──────────────────
+
+export type DdiSeverity =
+  | 'CRITICAL_CONTRAINDICATION'
+  | 'MODERATE_INTERACTION'
+  | 'FOOD_RESTRICTION'
+  | 'MONITORING_REQUIRED'
+  | 'NO_KNOWN_INTERACTION';
+
+export interface DdiInteraction {
+  id: string;
+  drug1Salt: string;
+  drug2Salt: string;
+  severity: DdiSeverity;
+  /** Plain-language description shown to patient */
+  patientSummary: string;
+  /** Clinical-grade description shown to pharmacist */
+  clinicalMechanism: string;
+  /** Published clinical reference or journal citation */
+  citation: string;
+  /** Recommended clinical action */
+  recommendation: string;
+  /** True if this combination is absolutely contraindicated */
+  isAbsoluteContraindication: boolean;
+  /** Known examples of this interaction */
+  examplePairs?: string[];
+}
+
+export interface DdiAlertPayload {
+  patientId: string;
+  orderId?: string;
+  evaluatedAt: string;
+  cartSalts: string[];
+  chronicMedicationSalts: string[];
+  interactions: DdiInteraction[];
+  hasCritical: boolean;
+  hasModerate: boolean;
+  hasFoodRestriction: boolean;
+  /** True if Gemini AI was used; false if rule-based fallback */
+  aiAssisted: boolean;
+  /** Confidence score 0–1 from Gemini (null if rule-based) */
+  confidenceScore: number | null;
+  /** Pharmacist has reviewed and acknowledged */
+  pharmacistAcknowledged: boolean;
+  pharmacistNotes?: string;
+}
+
+export interface PharmacistCdsFlag {
+  orderId: string;
+  patientId: string;
+  flaggedAt: string;
+  interactions: DdiInteraction[];
+  requiresPharmacistReview: boolean;
+  reviewedAt?: string;
+  reviewedByPharmacistId?: string;
+  decision: 'PENDING' | 'APPROVED_WITH_COUNSELLING' | 'REJECTED_UNSAFE';
+}
+
+// ─── Workstream 3.3: Voice Search & Accessibility ────────────────────────────
+
+export type SupportedLanguage =
+  | 'en-US'
+  | 'hi-IN'
+  | 'bn-IN'
+  | 'mr-IN'
+  | 'ta-IN'
+  | 'te-IN'
+  | 'kn-IN'
+  | 'es-US';
+
+export interface VoiceSearchResult {
+  rawTranscript: string;
+  normalizedQuery: string;
+  detectedLanguage: SupportedLanguage;
+  phoneticCorrections: PhoneticMatch[];
+  resolvedMolecules: string[];
+  latencyMs: number;
+  confidence: number;
+}
+
+export interface PhoneticMatch {
+  inputTerm: string;
+  matchedMolecule: string;
+  soundexCode: string;
+  metaphoneCode: string;
+  editDistance: number;
+  confidence: number;
+}
+
+export type ContrastTheme = 'default' | 'high-contrast' | 'large-text' | 'simplified';
+
+export interface AccessibilityPreferences {
+  patientId: string;
+  theme: ContrastTheme;
+  fontSize: 'normal' | 'large' | 'extra-large';
+  screenReaderEnabled: boolean;
+  reduceMotion: boolean;
+  preferredLanguage: SupportedLanguage;
+  voiceSearchEnabled: boolean;
+}
+
+// ─── Workstream 3.4: B2B Wholesale Marketplace ───────────────────────────────
+
+export type ManufacturerVerificationStatus =
+  | 'Verified'
+  | 'Pending Audit'
+  | 'Suspended'
+  | 'License Expired';
+
+export type CoaStatus = 'Submitted' | 'Verified' | 'Rejected' | 'Expired' | 'Pending';
+
+export type B2bCreditTermDays = 0 | 30 | 60 | 90;
+
+export interface ManufacturerProfile {
+  id: string;
+  name: string;
+  /** Short code (e.g. CIPLA, SUNPHARMA) */
+  code: string;
+  country: string;
+  headquarters: string;
+  licenseNumber: string;
+  licenseValidUntil: string;
+  verificationStatus: ManufacturerVerificationStatus;
+  certifiedMolecules: number;
+  activeBatches: number;
+  /** CDSCO/FDA GMP certificate number */
+  gmpCertificate: string;
+  contactEmail: string;
+  logoUrl?: string;
+}
+
+export interface WholesalePriceTier {
+  /** Minimum quantity for this tier */
+  minUnits: number;
+  /** Maximum quantity for this tier (null = unlimited) */
+  maxUnits: number | null;
+  /** Price per unit in USD at this tier */
+  pricePerUnit: number;
+  /** Percentage discount vs. base retail price */
+  discountPercent: number;
+}
+
+export interface CertificateOfAnalysis {
+  id: string;
+  listingId: string;
+  batchNumber: string;
+  manufacturerId: string;
+  /** ISO date of laboratory testing */
+  testedOn: string;
+  /** ISO date the CoA expires */
+  expiresOn: string;
+  /** URL to PDF document in secure storage */
+  documentUrl: string;
+  status: CoaStatus;
+  /** Purity percentage confirmed by lab */
+  purityPercent: number;
+  /** Stability test passed */
+  stabilityTestPassed: boolean;
+  /** Lab name that conducted the analysis */
+  testingLaboratory: string;
+  verifiedByPlatformAt?: string;
+}
+
+export interface WholesaleListing {
+  id: string;
+  manufacturerId: string;
+  manufacturerName: string;
+  genericSalt: string;
+  brandReference: string;
+  dosageForm: string;
+  strength: string;
+  /** Available stock in bulk units (e.g. bottles of 1000) */
+  availableUnits: number;
+  /** Base retail price per unit before wholesale discount */
+  baseRetailPricePerUnit: number;
+  priceTiers: WholesalePriceTier[];
+  coaId: string;
+  coaStatus: CoaStatus;
+  batchNumber: string;
+  expiryDate: string;
+  minimumOrderQuantity: number;
+  isActive: boolean;
+  therapeuticCategory: string;
+  bioEquivalentRating: string;
+}
+
+export type B2bOrderStatus =
+  | 'Draft'
+  | 'Pending CoA Review'
+  | 'Credit Check'
+  | 'Confirmed'
+  | 'In Production'
+  | 'Shipped'
+  | 'Delivered'
+  | 'Payment Due'
+  | 'Settled';
+
+export interface B2bOrder {
+  id: string;
+  orderNumber: string;
+  buyerTenantId: string;
+  buyerTenantName: string;
+  manufacturerId: string;
+  manufacturerName: string;
+  listingId: string;
+  genericSalt: string;
+  quantity: number;
+  pricePerUnit: number;
+  orderTotal: number;
+  discountPercent: number;
+  creditTermDays: B2bCreditTermDays;
+  coaVerified: boolean;
+  status: B2bOrderStatus;
+  placedAt: string;
+  deliveryEta?: string;
+  paymentDueDate?: string;
+  settledAt?: string;
+}
+
+export interface B2bCreditAccount {
+  tenantId: string;
+  tenantName: string;
+  /** Approved credit limit in USD */
+  creditLimitUsd: number;
+  /** Currently utilised credit */
+  utilisedCreditUsd: number;
+  availableCreditUsd: number;
+  defaultCreditTermDays: B2bCreditTermDays;
+  /** Outstanding invoices count */
+  outstandingInvoices: number;
+  creditRating: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'Unrated';
+  lastReviewedAt: string;
 }

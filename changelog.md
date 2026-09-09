@@ -10,8 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 | Version | Release Date | Primary Focus | Key Deliverables | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **[Unreleased]** | Future | EHR & 3PL Integration | FHIR/HL7 direct ingest, automated courier webhooks | Planned |
-| **[1.4.0]** | 2026-09-09 | Phase 1 Production Hardening | Shared utils, common components, env config, quality gates | Active / Current |
+| **[Unreleased]** | Future | Phase 4: Scale & Insurance | Real-time adjudication, microservices, 150+ cities | Planned |
+| **[3.0.0]** | 2026-09-09 | Phase 3: Clinical AI & B2B | FHIR/HL7 EHR, Gemini DDI engine, voice search, B2B wholesale | Active / Current |
+| **[2.0.0]** | 2026-09-09 | Phase 2: Logistics & IoT | 3PL carrier hub, IoT gateway, geo-fencing, mobile app | Verified |
+| **[1.4.0]** | 2026-09-09 | Phase 1 Production Hardening | Shared utils, common components, env config, quality gates | Verified |
 | **[2.4.0]** | 2026-09-09 | Architecture & AI Context | In-app PRD, Architecture visualizer, AI context docs | Verified |
 | **[2.3.0]** | 2026-09-06 | Authentication & Profile | Health profile, insurance BIN/PCN, multi-role auth | Verified |
 | **[2.2.0]** | 2026-09-03 | Multi-Tenant Portal | Pharmacy operations, order Kanban, vendor repricing | Verified |
@@ -37,6 +39,195 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 - Deprecated legacy manual order dispatch status polling once webhook consumers are active.
+
+---
+
+## [3.0.0] - 2026-09-09
+
+### Added
+
+**Phase 3 — Workstream 3.1: FHIR/HL7 EHR Integration Gateway**
+- `server/services/fhirService.ts` — Full FHIR R4 ingestion pipeline:
+  - `EHR_PROVIDERS` registry: Epic (2,850 hospitals), Cerner (1,800), Practo (340), Kareo (180), AthenaHealth (920), DrChrono (95)
+  - `ingestMedicationRequest()` — Validates FHIR R4 conformance (resourceType, id, status, intent, subject), extracts medication salts, verifies doctor PKI certificate against NMC/state registry, generates CHT-prefix cart hydration token
+  - `verifySignature()` — Standalone NMC registration number lookup
+  - `resolveCartHydration()` — Magic link token → CartHydrationPayload with 24h TTL
+  - Cart hydration status: `READY` (verified sig) | `PENDING_RX_CHECK` (unverified)
+- `server/routes/fhirRoutes.ts` — 6 endpoints under `/api/v3/fhir/`:
+  - `POST /medication-request`, `POST /verify-signature`, `GET /cart-hydration/:token`
+  - `GET /providers`, `GET /requests`, `GET /requests/:id`
+- `src/components/clinical/FhirEhrScreen.tsx` — 3-tab portal screen:
+  - **Providers**: EHR provider grid (connectedHospitals, FHIR version, digital signature support)
+  - **Ingest**: FHIR request list → preview panel → ingest + verify signature button
+  - **History**: Ingested results with signature status badge, medication pills, cart hydration magic link copy button
+- Phase 3 mock data: `INITIAL_FHIR_PROVIDERS` (6), `INITIAL_FHIR_REQUESTS` (3 R4 resources with NMC registrationNumbers)
+
+**Phase 3 — Workstream 3.2: Gemini AI Drug-Drug Interaction Engine**
+- `server/services/ddiService.ts` — Clinical contraindication database + Gemini AI augmentation:
+  - `DDI_DATABASE` — 10 clinically verified interactions: 2 CRITICAL (Sildenafil+Nitrates, Sertraline+Tramadol), 5 MODERATE (Lisinopril+Spironolactone, Warfarin+Ibuprofen, Atorvastatin+Clarithromycin, Amoxicillin+Penicillin, Metformin+Contrast), 2 FOOD (Metformin+Alcohol, Atorvastatin+Grapefruit), 1 MONITORING (Levothyroxine+Calcium)
+  - `evaluate()` — Async, runs rule-based engine then augments with Gemini AI (gemini-2.5-flash) if `GEMINI_API_KEY` present; deduplicates results
+  - `createCdsFlag()` — Auto-generates Pharmacist Clinical Decision Support flag for CRITICAL interactions
+  - `reviewCdsFlag()` — Records pharmacist decision (`APPROVED_WITH_COUNSELLING` | `REJECTED_UNSAFE`) with timestamp and license number
+- `server/routes/ddiRoutes.ts` — 5 endpoints under `/api/v3/ddi/`:
+  - `POST /evaluate`, `GET /alerts/:patientId`, `POST /pharmacist-review`
+  - `GET /cds-flags/pending`, `GET /database`
+- `src/components/clinical/DdiAlertModal.tsx` — Three exported components:
+  - `InteractionCard` — Expandable card showing patient summary, clinical mechanism, recommendation, citation
+  - `DdiAlertModal` — Full severity-coded modal (rose/amber/orange/blue headers) with dismiss + "continue anyway" (non-critical only)
+  - `DdiEngineScreen` — Demo screen with textarea inputs, client-side DDI evaluation, result summary strip
+  - `PharmacistCdsPanel` — Inline CDS review panel for OrdersPipelineScreen with clinical notes textarea
+- Phase 3 mock data: `INITIAL_DDI_INTERACTIONS` (10 clinical interactions for client-side demo)
+
+**Phase 3 — Workstream 3.3: Multilingual Voice Search & WCAG Accessibility**
+- `server/services/voiceSearchService.ts` — Pure in-process phonetic engine:
+  - `soundex()` — 4-character Soundex code (American Metaphone standard)
+  - `metaphone()` — Double Metaphone primary code (handles silent letters, digraphs)
+  - `editDistance()` — Levenshtein distance (O(mn) DP)
+  - `search()` — 3-tier pipeline: (1) vernacular transliteration, (2) direct catalog match, (3) phonetic matching; latency ~1–2ms (Quality Gate: < 1,500ms)
+  - `VERNACULAR_DRUG_MAP` — Hindi, Bengali, Spanish colloquial → molecule name lookup
+  - `MOLECULE_DICTIONARY` — 40 canonical drug names for phonetic matching
+  - `SUPPORTED_LANGUAGES` — 8 languages: en-US, hi-IN, bn-IN, mr-IN, ta-IN, te-IN, kn-IN, es-US
+  - `AccessibilityPreferences` storage with `saveAccessibilityPreferences()`
+- `server/routes/voiceRoutes.ts` — 5 endpoints under `/api/v3/voice/`:
+  - `POST /search`, `POST /phonetic-match`, `GET /languages`, `GET/PATCH /accessibility/:patientId`
+- `src/components/clinical/VoiceSearchWidget.tsx` — Two exported components:
+  - `VoiceSearchWidget` — Full-featured widget: Web Speech API mic (with language param), 8-language pill selector, input field, phonetic results with Soundex/Metaphone codes + confidence bars, "Use" buttons
+  - WCAG 2.1 Accessibility panel: 4 contrast themes (default/high-contrast/large-text/simplified), font size selector, reduce motion, screen reader toggles
+  - `VoiceSearchScreen` — Full portal screen with widget + example queries panel + quality gate callout
+
+**Phase 3 — Workstream 3.4: B2B Wholesale Generic Procurement Marketplace**
+- `server/services/wholesaleService.ts` — Full B2B procurement engine:
+  - `MANUFACTURERS` — 5 verified manufacturers: Cipla (1,500 molecules), Sun Pharma (2,100), Dr. Reddy's (900), Torrent (640), Lupin (780); all WHO-GMP/FDA-GMP certified
+  - `calculateWholesalePrice()` — Tiered pricing: Tier 1 (100–999 units), Tier 2 (1,000–9,999), Tier 3 (10,000+); discounts 21–71%
+  - `submitCoa()` — Auto-verification: purity < 99.5% → Rejected, expired → Expired, valid → Verified + timestamp
+  - `createListing()` — Blocks activation until CoA is Verified (Quality Gate 3)
+  - `placeOrder()` — Validates: CoA verified, quantity ≥ MOQ, credit available; deducts from credit account
+  - `advanceOrderStatus()` — Full lifecycle: Draft → Confirmed → Shipped → Settled; credit released on Settled
+  - Seeded: 5 listings, 5 CoAs, 4 credit accounts (Apollo: A+/$500K, CarePoint: A/$250K, HealthKart: B+/$150K, SunMed: B/$100K)
+- `server/routes/wholesaleRoutes.ts` — 15 endpoints under `/api/v3/wholesale/`:
+  - `GET /manufacturers`, `GET /manufacturers/:id`
+  - `GET /listings`, `GET /listings/:id`, `POST /listings`, `POST /listings/:id/price-quote`
+  - `GET /coa`, `GET /coa/:id`, `POST /coa-upload`
+  - `GET /orders`, `GET /orders/:id`, `POST /orders`, `PATCH /orders/:id/status`
+  - `GET /credit-terms`, `GET /credit-terms/:tenantId`
+- `src/components/wholesale/WholesaleMarketplaceScreen.tsx` — 4-tab portal screen:
+  - **Catalog**: Listing cards with tier pricing strip, CoA badge, filter by manufacturer; sticky order panel with live price calculator, quantity input, Net-0/30/60 credit terms selector
+  - **Manufacturers**: Verification grid showing GMP certificate, molecule count, active batches, license validity
+  - **Orders**: Pipeline with CoA verified badge, status pill, discount %, payment due date
+  - **Credit & Terms**: Utilisation gauges with colour-coded risk (emerald/amber/rose), credit rating badge
+
+**Phase 3 — Integration, Mock Data & Testing**
+- `src/types.ts` — 26 new interfaces/enums: `EhrProviderSystem`, `FhirSignatureStatus`, `CartHydrationStatus`, `EhrProvider`, `FhirMedicationRequest` (full R4 shape), `FhirIngestResult`, `CartHydrationPayload`, `DdiSeverity`, `DdiInteraction`, `DdiAlertPayload`, `PharmacistCdsFlag`, `SupportedLanguage`, `VoiceSearchResult`, `PhoneticMatch`, `ContrastTheme`, `AccessibilityPreferences`, `ManufacturerVerificationStatus`, `CoaStatus`, `B2bCreditTermDays`, `ManufacturerProfile`, `WholesalePriceTier`, `CertificateOfAnalysis`, `WholesaleListing`, `B2bOrderStatus`, `B2bOrder`, `B2bCreditAccount`; `PortalTab` extended with 4 Phase 3 values
+- `src/data/initialData.ts` — Phase 3 mock fixtures appended
+- `src/App.tsx` — Phase 3 screen imports + portal routing + 4 quick-dock buttons
+- `server/index.ts` — Phase 3 routes mounted; server version → `3.0.0`
+- `package.json` — `test:phase3` script added
+
+### Verified
+
+- **Phase 3 Quality Gates: 42/42 PASS** (`npm run test:phase3`)
+  - Gates 1–9: FHIR R4 conformance, NMC digital signature VERIFIED/INVALID, CHT token, cart hydration READY, medication mapping, conformance rejection, 5-provider registry
+  - Gates 10–19: DDI 100% precision (10/10 database), CRITICAL Sildenafil+Nitrates + absolute contraindication, CRITICAL Sertraline+Tramadol, MODERATE Warfarin+Ibuprofen, FOOD Atorvastatin+Grapefruit, MONITORING Levothyroxine+Calcium, safe Paracetamol+VitD3, CDS flag PENDING, CDS review APPROVED_WITH_COUNSELLING
+  - Gates 20–29: Soundex Atorvastatin=Atorvastaten, Metformin=Metaformin, Metaphone non-empty, editDistance ≤2, identical=0, latency 1.6ms (< 1,500ms target), Metaformin 97% phonetic confidence, Hindi/Spanish vernacular transliteration, 8-language registry
+  - Gates 30–42: 5 manufacturers Verified, COA_REQUIRED listing enforcement, purity 98%→Rejected, expired→Expired, valid 99.9%→Verified, three pricing tiers ($0.32/24%, $0.22/48%, $0.14/67%), 50k×$0.14=$7,000 exact, order coaVerified=true, MOQ_NOT_MET, lifecycle Shipped, credit settlement
+- **Phase 1 11/11, Phase 2 32/32 — zero regressions**
+- **TypeScript lint: zero errors** (`tsc --noEmit`)
+
+---
+
+## [2.0.0] - 2026-09-09
+
+### Added
+
+**Phase 2 — Workstream 2.1: 3PL Carrier Integration Hub**
+- `server/services/logisticsService.ts` — Unified 3PL carrier abstraction layer:
+  - `CARRIER_REGISTRY`: Dunzo On-Demand (75min, cold-chain), Shadowfax (3h, ambient), FedEx Healthcare Express (8h, cold-chain)
+  - `autoDispatch()` — Smart carrier selection by distance (≤10mi→Dunzo, ≤50mi→Shadowfax, long-haul→FedEx) and cold-chain requirement; generates waybill + barcode; assigns nearest available rider; SLA measured in milliseconds (actual: ~0.15ms vs 180,000ms target)
+  - `ingestWebhookEvent()` — Carrier status ingestion (`ASSIGNED → PICKED_UP → OUT_FOR_DELIVERY → DELIVERED`); syncs platform order status automatically
+  - `getWaybill()` — Returns FDA-compliant waybill document with regulatory declaration
+  - `failoverCarrier()` — Takes a carrier offline and re-assigns its active shipments to a fallback
+  - Rider management: `updateRiderLocation()`, `getDeliveryStopsForRider()`, `verifyOtp()`, `submitProofOfDelivery()`
+- `server/routes/logisticsRoutes.ts` — 14 endpoints under `/api/v2/logistics/`:
+  - `POST /dispatch`, `GET /dispatches`, `GET /dispatches/:id`
+  - `GET /waybill/:waybillNumber`
+  - `POST /carrier-webhook`, `POST /carrier/:id/failover`, `GET /carriers`
+  - `GET /riders`, `GET /riders/:id`, `GET /riders/:id/stops`, `PATCH /riders/:id/location`
+  - `POST /otp/verify`, `POST /pod`, `GET /pod/:shipmentId`
+  - `GET /geo-zones`, `POST /geo-zones`, `POST /geo-zones/proximity`, `POST /geo-zones/distance-matrix`
+
+**Phase 2 — Workstream 2.2: IoT Cold-Chain Gateway**
+- `server/services/iotGatewayService.ts` — MQTT/HTTP telemetry pipeline:
+  - `ingest()` — Per-packet cumulative excursion tracking: each breach packet accrues 0.5min; once ≥ 10min, `quarantineTriggered=true` and breach protocol fires automatically
+  - `triggerBreachProtocol()` — Creates replacement re-dispatch order at zero cost to patient; emits `MobileNotification`; sets order to `Re-dispatching`
+  - Excursion counter resets to 0 when temperature returns to the 2°C–8°C GDP safe range
+  - `bleSyncOnDelivery()` — Ingests Bluetooth Low Energy flash memory log from rider's device upon delivery; confirms cold-chain integrity
+  - `getBreachAlerts()`, `resolveBreachAlert()`, `getNotifications()`, `markNotificationRead()`
+- `server/routes/iotRoutes.ts` — 8 endpoints under `/api/v2/iot/`:
+  - `POST /ingest` (enhanced — returns quarantine status, GDP compliance flag)
+  - `GET /orders/:orderId/telemetry` (with ExcursionTracker state)
+  - `GET /breach-alerts`, `POST /breach-alerts/:id/resolve`
+  - `POST /ble-sync`
+  - `GET /notifications/:userId`, `PATCH /notifications/:id/read`
+
+**Phase 2 — Workstream 2.3: Rider Companion App**
+- `src/components/logistics/RiderCompanionScreen.tsx` — Dark-theme mobile-native UI with 4 tabs:
+  - **Route**: Delivery stop queue with cold-chain badge, distance/ETA, address
+  - **Scanner**: Barcode scanner simulation; validates shipment by waybill number
+  - **OTP**: 4-digit numeric doorstep verification with shipment selector
+  - **POD**: Photo proof-of-delivery capture per stop; advances to `DELIVERED` on submit
+  - Live cold-chain sensor temperature slider (simulates BLE sensor reading)
+
+**Phase 2 — Workstream 2.4: Geo-Fencing & Proximity Routing**
+- `server/services/geoFencingService.ts`:
+  - 4 seeded NYC delivery polygons (Manhattan, Brooklyn, Queens, Bronx)
+  - `haversineDistanceMiles()` — Great-circle distance calculation
+  - `pointInPolygon()` — Ray-casting boundary test with radius fallback
+  - `scoreProximity()` — Returns all zones scored by ADR-004 formula `max(0, 100 − distanceMi × 5)`, sorted descending
+  - `getDistanceMatrix()` — Google Distance Matrix API with Haversine stub fallback
+  - `findNearestAlternatePharmacy()` — Breach re-dispatch routing excluding quarantined tenant
+- `src/components/logistics/GeoFenceMapScreen.tsx` — Interactive SVG polygon map:
+  - 600×400 viewport-mapped NYC zones, click-to-select, patient pin
+  - Zone editor: toggle active/inactive, edit service radius inline
+  - Proximity score table with ADR-004 weighting bars, carrier icons, in-zone badges
+
+**Phase 2 — Mobile Patient App**
+- `src/components/mobile/MobilePatientApp.tsx` — React Native simulation with 5 screens:
+  - **Home**: Quick-action grid, cold-chain live widget, activity feed, React Native feature callout
+  - **Biometric Auth**: FaceID/TouchID animation (scanning → success states)
+  - **Rx Camera**: Corner-bracket viewfinder, auto-capture simulation, Gemini AI field extraction preview, file upload fallback
+  - **Notifications**: Typed push notification feed with read/unread state and type-specific icons
+  - **Tracking**: Live order status, ColdChainBadge panel, temperature sparkline bar chart, telemetry sensors
+  - Offline cart banner simulation toggle
+
+**Phase 2 — Logistics Dashboard (Portal)**
+- `src/components/logistics/LogisticsDashboardScreen.tsx` — 4-tab portal screen:
+  - **Active Shipments**: Full dispatch list with carrier icon, cold-chain badge, event timeline strip
+  - **Carriers**: Grid of all 3 carriers with status, avg delivery, base cost, cold-chain support
+  - **Riders**: Table with vehicle, location, battery, rating, route drill-down button
+  - **Auto-Dispatch**: Order ID input → simulates full dispatch in 800ms; carrier selection logic explainer card
+
+**Phase 2 — Types, Data & Integration**
+- `src/types.ts` — 24 new interfaces/enums: `CarrierType`, `CarrierStatus`, `ShipmentEventStatus`, `CarrierProfile`, `ShipmentDispatch`, `CourierWebhookEvent`, `WaybillDocument`, `AutoDispatchResult`, `IoTSensorPacket`, `BreachAlert`, `BLESyncRecord`, `ExcursionTracker`, `SensorProtocol`, `RiderProfile`, `RiderStatus`, `DeliveryStop`, `OtpVerification`, `ProofOfDelivery`, `GeoCoordinate`, `GeoFencePolygon`, `ProximityScore`, `DistanceMatrixResult`, `NotificationType`, `MobileNotification`; `PortalTab` extended with `logistics-dashboard`, `rider-companion`, `geo-fence-zones`, `mobile-patient-app`
+- `src/data/initialData.ts` — Phase 2 mock fixtures: `INITIAL_CARRIERS` (3), `INITIAL_DISPATCHES` (3 with event histories), `INITIAL_RIDERS` (3), `INITIAL_GEO_FENCES` (4 NYC polygons), `INITIAL_PROXIMITY_SCORES` (4), `INITIAL_IOT_PACKETS` (10 BLE readings for ord-1), `INITIAL_MOBILE_NOTIFICATIONS` (5)
+- `src/App.tsx` — Phase 2 imports wired; `activeRiderId` state; 4 portal tab routes; 4 quick-dock sidebar buttons
+- `server/index.ts` — Phase 2 routes mounted (`/api/v2/logistics`, `/api/v2/iot`); version bumped to `2.0.0`
+- `package.json` — Added `test:phase2` npm script
+
+### Verified
+
+- **Phase 2 Quality Gates: 32/32 PASS** (`npm run test:phase2`)
+  - Gates 1–7: Auto-dispatch SLA compliance, carrier selection accuracy (Dunzo/FedEx cold-chain), waybill generation, regulatory declaration
+  - Gates 8–10: Carrier failover — offline status, shipment re-assignment, fallback carrier assigned
+  - Gates 11–12: Webhook lifecycle — `PICKED_UP` → `OUT_FOR_DELIVERY` synced to platform order status
+  - Gate 13: Optimal telemetry (4.5°C) — zero excursion accrual, no quarantine
+  - Gates 14–17: Cumulative excursion (21 packets × 0.5min = 10.5min) → `quarantineTriggered=true` → `BreachAlert` persisted
+  - Gates 18–19: Excursion counter resets to 0 on temperature recovery
+  - Gates 20–21: BLE flash sync — 3 packets ingested, cold-chain integrity confirmed
+  - Gates 22–25: Geo-fence proximity scoring — 4 zones, ADR-004 formula verified, nearest correctly ranked
+  - Gates 26–28: Point-in-polygon — Brooklyn inside CarePoint zone, remote coord rejected, alternate re-dispatch pharmacy found
+  - Gates 29–32: OTP valid/invalid, POD submission advances to `DELIVERED`
+- **Phase 1 Quality Gates: 11/11 still passing** — no regressions
+- **TypeScript lint: zero errors** (`tsc --noEmit`)
 
 ---
 

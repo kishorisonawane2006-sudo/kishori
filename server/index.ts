@@ -7,6 +7,8 @@ import orderRoutes from './routes/orderRoutes';
 import prescriptionRoutes from './routes/prescriptionRoutes';
 import tenantRoutes from './routes/tenantRoutes';
 import telemetryRoutes from './routes/telemetryRoutes';
+import logisticsRoutes from './routes/logisticsRoutes';
+import iotRoutes from './routes/iotRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { storage } from './services/storageService';
 
@@ -46,8 +48,8 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'HEALTHY',
     service: 'Generic Medicine Store & Multi-Tenant Modular Monolith',
-    version: '1.4.0',
-    phase: 'Phase 1: MVP Core Marketplace Foundation',
+    version: '3.0.0',
+    phase: 'Phase 3: Clinical EHR Sync, Gemini AI Safety & B2B Wholesale',
     timestamp: new Date().toISOString(),
     metrics: {
       activeTenants: storage.getTenants().length,
@@ -66,6 +68,21 @@ app.use('/api/v1/cart', orderRoutes);
 app.use('/api/v1/prescriptions', prescriptionRoutes);
 app.use('/api/v1/tenant', tenantRoutes);
 app.use('/api/v1/telemetry', telemetryRoutes);
+
+// Phase 2: Logistics & IoT Routes
+app.use('/api/v2/logistics', logisticsRoutes);
+app.use('/api/v2/iot', iotRoutes);
+
+// Phase 3: Clinical EHR, DDI Engine, Voice Search, B2B Wholesale
+import fhirRoutes from './routes/fhirRoutes';
+import ddiRoutes from './routes/ddiRoutes';
+import voiceRoutes from './routes/voiceRoutes';
+import wholesaleRoutes from './routes/wholesaleRoutes';
+
+app.use('/api/v3/fhir', fhirRoutes);
+app.use('/api/v3/ddi', ddiRoutes);
+app.use('/api/v3/voice', voiceRoutes);
+app.use('/api/v3/wholesale', wholesaleRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);
