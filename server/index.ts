@@ -48,8 +48,8 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'HEALTHY',
     service: 'Generic Medicine Store & Multi-Tenant Modular Monolith',
-    version: '3.0.0',
-    phase: 'Phase 3: Clinical EHR Sync, Gemini AI Safety & B2B Wholesale',
+    version: '4.0.0',
+    phase: 'Phase 4: Pan-National Scale, Insurance Adjudication & Microservice Decomposition',
     timestamp: new Date().toISOString(),
     metrics: {
       activeTenants: storage.getTenants().length,
@@ -83,6 +83,15 @@ app.use('/api/v3/fhir', fhirRoutes);
 app.use('/api/v3/ddi', ddiRoutes);
 app.use('/api/v3/voice', voiceRoutes);
 app.use('/api/v3/wholesale', wholesaleRoutes);
+
+// Phase 4: Insurance Adjudication, Hub Logistics, Event Bus & Microservices
+import insuranceRoutes from './routes/insuranceRoutes';
+import hubRoutes from './routes/hubRoutes';
+import eventBusRoutes from './routes/eventBusRoutes';
+
+app.use('/api/v4/insurance', insuranceRoutes);
+app.use('/api/v4/hubs', hubRoutes);
+app.use('/api/v4/events', eventBusRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

@@ -61,6 +61,11 @@ import { DdiEngineScreen } from './components/clinical/DdiAlertModal';
 import { VoiceSearchScreen } from './components/clinical/VoiceSearchWidget';
 import { WholesaleMarketplaceScreen } from './components/wholesale/WholesaleMarketplaceScreen';
 
+// ── Phase 4: Insurance Adjudication, Hub Logistics, Microservice Architecture ─
+import { InsuranceAdjudicationScreen } from './components/insurance/InsuranceAdjudicationScreen';
+import { HubLogisticsMeshScreen } from './components/infrastructure/HubLogisticsMeshScreen';
+import { MicroserviceArchitectureScreen } from './components/infrastructure/MicroserviceArchitectureScreen';
+
 export default function App() {
   // Global View Mode (Defaults to patient medicine marketplace for easy discovery)
   const [appMode, setAppMode] = useState<AppMode>('patient');
@@ -456,6 +461,35 @@ export default function App() {
                   >
                     <span className="material-symbols-outlined text-[18px]">storefront</span>
                   </button>
+                  {/* Phase 4 quick access */}
+                  <div className="w-5 h-px bg-slate-700/80 my-0.5"></div>
+                  <button
+                    onClick={() => setPortalTab('insurance-adjudication')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'insurance-adjudication' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 4: Insurance Adjudication"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">health_and_safety</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('hub-logistics')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'hub-logistics' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 4: Hub Logistics Mesh"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">hub</span>
+                  </button>
+                  <button
+                    onClick={() => setPortalTab('microservice-architecture')}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      portalTab === 'microservice-architecture' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title="Phase 4: Microservice Architecture"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">account_tree</span>
+                  </button>
                 </div>
               )}
 
@@ -532,6 +566,13 @@ export default function App() {
                 {portalTab === 'voice-search' && <VoiceSearchScreen />}
 
                 {portalTab === 'wholesale-marketplace' && <WholesaleMarketplaceScreen />}
+
+                {/* ── Phase 4: Insurance, Hub Logistics & Microservices ────── */}
+                {portalTab === 'insurance-adjudication' && <InsuranceAdjudicationScreen />}
+
+                {portalTab === 'hub-logistics' && <HubLogisticsMeshScreen />}
+
+                {portalTab === 'microservice-architecture' && <MicroserviceArchitectureScreen />}
               </div>
             </div>
           </div>

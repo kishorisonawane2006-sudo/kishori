@@ -1100,3 +1100,112 @@ export const INITIAL_B2B_CREDIT_ACCOUNTS: B2bCreditAccount[] = [
   { tenantId: 'TNT-5021', tenantName: 'HealthKart Generic Direct',  creditLimitUsd: 150000, utilisedCreditUsd: 91200,  availableCreditUsd: 58800,  defaultCreditTermDays: 60, outstandingInvoices: 2, creditRating: 'B+', lastReviewedAt: '2026-07-20T00:00:00Z' },
   { tenantId: 'TNT-1194', tenantName: 'SunMed Drugstores',          creditLimitUsd: 100000, utilisedCreditUsd: 12000,  availableCreditUsd: 88000,  defaultCreditTermDays: 30, outstandingInvoices: 1, creditRating: 'B',  lastReviewedAt: '2026-08-10T00:00:00Z' },
 ];
+
+// =============================================================================
+// PHASE 4 MOCK DATA — Insurance, Hub Logistics, Microservices
+// =============================================================================
+import {
+  InsuranceClaim,
+  TpaProvider,
+  HubWarehouse,
+  DroneCorridor,
+  CityExpansion,
+  MicroserviceHealth,
+  KafkaTopic,
+} from '../types';
+
+export const INITIAL_TPA_PROVIDERS: TpaProvider[] = [
+  { id: 'tpa-bcbs-01',   name: 'Blue Cross Blue Shield',      rxBin: '004336', rxPcn: 'ADV',   supportedPlanTypes: ['PPO','HMO','EPO','HDHP'],                    adjudicationEndpoint: 'https://claims.bcbs.com/ncpdp/v1/adjudicate',     averageResponseMs: 840,  isActive: true, coverageStates: ['NY','NJ','CT','PA','MA','IL','TX','CA'] },
+  { id: 'tpa-unitedhc-01',name: 'UnitedHealthcare OptumRx',   rxBin: '610502', rxPcn: 'MEDD', supportedPlanTypes: ['PPO','HMO','Medicare Part D','Medicaid'],       adjudicationEndpoint: 'https://api.optumrx.com/ncpdp/v2/claims',         averageResponseMs: 620,  isActive: true, coverageStates: ['NY','CA','TX','FL','OH','IL','PA','GA'] },
+  { id: 'tpa-aetna-01',   name: 'Aetna CVS Health',           rxBin: '003858', rxPcn: 'A4',   supportedPlanTypes: ['PPO','HMO','POS','Medicare Part D'],             adjudicationEndpoint: 'https://rxapi.aetna.com/ncpdp/v3/submit',         averageResponseMs: 780,  isActive: true, coverageStates: ['NY','CT','NJ','PA','FL','TX','CA','OH'] },
+  { id: 'tpa-cigna-01',   name: 'Cigna Express Scripts',      rxBin: '770714', rxPcn: 'CIGNA',supportedPlanTypes: ['PPO','HMO','HDHP','Medicaid'],                   adjudicationEndpoint: 'https://api.express-scripts.com/claims/ncpdp',   averageResponseMs: 910,  isActive: true, coverageStates: ['NY','NJ','PA','MA','IL','MO','TX','AZ'] },
+  { id: 'tpa-humana-01',  name: 'Humana Pharmacy Solutions',  rxBin: '173387', rxPcn: 'HPHRX',supportedPlanTypes: ['Medicare Advantage','Medicare Part D','PPO','HMO'],adjudicationEndpoint: 'https://pharmacy.humana.com/ncpdp/adjudicate',    averageResponseMs: 1050, isActive: true, coverageStates: ['FL','TX','KY','OH','GA','TN','IN','AZ'] },
+];
+
+export const INITIAL_INSURANCE_CLAIMS: InsuranceClaim[] = [
+  {
+    id: 'CLM-88104201',
+    claimNumber: 'NCPDP-8810420',
+    patientId: 'usr-patient-8821',
+    patientName: 'Sarah Jenkins',
+    orderId: 'ord-1',
+    tpaProviderId: 'tpa-bcbs-01',
+    tpaProviderName: 'Blue Cross Blue Shield',
+    request: { transactionCode: 'B1', pharmacyNpi: '1234567890', pharmacyDea: 'FA1234563', rxBin: '004336', rxPcn: 'ADV', rxGroup: 'GRP-MED-7712', memberId: 'BCBS-NY-9941028', ndc11: '00071015523', quantityDispensed: 30, daysSupply: 30, submittedIngredientCost: 8.40, usualAndCustomaryPrice: 9.24, prescriberId: 'dr-harrison-wright', dateOfService: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0], orderId: 'ord-1', patientId: 'usr-patient-8821' },
+    coPayCalculation: { claimId: 'CLM-88104201', patientId: 'usr-patient-8821', genericSalt: 'Atorvastatin Calcium', brandReferenceCost: 26.88, genericIngredientCost: 8.40, patientCopayAmount: 0.84, insurerReimbursementAmount: 7.56, dispensingFee: 2.50, pharmacyReimbursement: 10.90, copayPercent: 3, formularyTier: 'Tier1_Generic', priorAuthRequired: false, calculatedAt: new Date(Date.now() - 2 * 86400000).toISOString(), latencyMs: 42 },
+    status: 'Approved',
+    submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    adjudicatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    adjudicationLatencyMs: 42,
+  },
+  {
+    id: 'CLM-88104202',
+    claimNumber: 'NCPDP-8810421',
+    patientId: 'usr-patient-8821',
+    patientName: 'Sarah Jenkins',
+    orderId: 'ord-7',
+    tpaProviderId: 'tpa-bcbs-01',
+    tpaProviderName: 'Blue Cross Blue Shield',
+    request: { transactionCode: 'B1', pharmacyNpi: '1234567890', pharmacyDea: 'FA1234563', rxBin: '004336', rxPcn: 'ADV', rxGroup: 'GRP-MED-7712', memberId: 'BCBS-NY-9941028', ndc11: '50458540060', quantityDispensed: 60, daysSupply: 30, submittedIngredientCost: 3.90, usualAndCustomaryPrice: 4.29, prescriberId: 'dr-harrison-wright', dateOfService: new Date(Date.now() - 50 * 86400000).toISOString().split('T')[0], orderId: 'ord-7', patientId: 'usr-patient-8821' },
+    coPayCalculation: { claimId: 'CLM-88104202', patientId: 'usr-patient-8821', genericSalt: 'Metformin HCl', brandReferenceCost: 12.48, genericIngredientCost: 3.90, patientCopayAmount: 0.39, insurerReimbursementAmount: 3.51, dispensingFee: 2.50, pharmacyReimbursement: 6.40, copayPercent: 3, formularyTier: 'Tier1_Generic', priorAuthRequired: false, calculatedAt: new Date(Date.now() - 50 * 86400000).toISOString(), latencyMs: 38 },
+    status: 'Paid',
+    submittedAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+    adjudicatedAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+    paidAt: new Date(Date.now() - 48 * 86400000).toISOString(),
+    adjudicationLatencyMs: 38,
+  },
+];
+
+export const INITIAL_HUB_WAREHOUSES: HubWarehouse[] = [
+  { id: 'hub-nyc-01', name: 'New York Metro Distribution Hub', city: 'Newark',  state: 'NJ', tier: 'Tier1_Metro',     latitude: 40.7357, longitude: -74.1724, capacityCubicMeters: 12000, coldStorageCapacityCubicMeters: 2400, utilisationPercent: 72, branchesServed: 148, avgReplenishmentCycleHours: 4, activeSkus: 8420, isActive: true, droneCorridorIds: ['drone-nyc-brooklyn','drone-nyc-queens'] },
+  { id: 'hub-chi-01', name: 'Chicago Central Fulfillment Hub', city: 'Chicago', state: 'IL', tier: 'Tier1_Metro',     latitude: 41.8781, longitude: -87.6298, capacityCubicMeters: 9500,  coldStorageCapacityCubicMeters: 1800, utilisationPercent: 65, branchesServed: 112, avgReplenishmentCycleHours: 5, activeSkus: 6810, isActive: true, droneCorridorIds: ['drone-chi-south','drone-chi-west'] },
+  { id: 'hub-dal-01', name: 'Dallas-Fort Worth Regional Hub',  city: 'Irving',  state: 'TX', tier: 'Tier2_Regional',  latitude: 32.8140, longitude: -96.9489, capacityCubicMeters: 7200,  coldStorageCapacityCubicMeters: 1200, utilisationPercent: 58, branchesServed: 84,  avgReplenishmentCycleHours: 6, activeSkus: 5200, isActive: true, droneCorridorIds: ['drone-dfw-rural'] },
+  { id: 'hub-la-01',  name: 'Los Angeles Distribution Hub',    city: 'Gardena', state: 'CA', tier: 'Tier1_Metro',     latitude: 33.8883, longitude: -118.3089,capacityCubicMeters: 10800, coldStorageCapacityCubicMeters: 2100, utilisationPercent: 79, branchesServed: 134, avgReplenishmentCycleHours: 4, activeSkus: 7640, isActive: true, droneCorridorIds: ['drone-la-inland'] },
+  { id: 'hub-mia-01', name: 'Miami Southeast Hub',             city: 'Doral',   state: 'FL', tier: 'Tier2_Regional',  latitude: 25.8197, longitude: -80.3556, capacityCubicMeters: 6400,  coldStorageCapacityCubicMeters: 1600, utilisationPercent: 61, branchesServed: 76,  avgReplenishmentCycleHours: 7, activeSkus: 4890, isActive: true, droneCorridorIds: ['drone-mia-rural'] },
+];
+
+export const INITIAL_DRONE_CORRIDORS: DroneCorridor[] = [
+  { id: 'drone-nyc-brooklyn', name: 'NYC Metro → Brooklyn',      originHubId: 'hub-nyc-01', originCity: 'Newark',  destinationZone: 'Brooklyn, NY',    distanceMiles: 8.4,  maxPayloadKg: 2.5, avgFlightMins: 18, supportsColdChain: true,  altitudeFeet: 400, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+  { id: 'drone-nyc-queens',   name: 'NYC Metro → Queens',        originHubId: 'hub-nyc-01', originCity: 'Newark',  destinationZone: 'Queens, NY',      distanceMiles: 10.2, maxPayloadKg: 2.5, avgFlightMins: 22, supportsColdChain: true,  altitudeFeet: 400, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+  { id: 'drone-chi-south',    name: 'Chicago → South Side',      originHubId: 'hub-chi-01', originCity: 'Chicago', destinationZone: 'South Chicago',   distanceMiles: 6.1,  maxPayloadKg: 3.0, avgFlightMins: 14, supportsColdChain: false, altitudeFeet: 350, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+  { id: 'drone-chi-west',     name: 'Chicago → West Suburbs',    originHubId: 'hub-chi-01', originCity: 'Chicago', destinationZone: 'Oak Park, IL',    distanceMiles: 9.8,  maxPayloadKg: 3.0, avgFlightMins: 21, supportsColdChain: false, altitudeFeet: 350, isActive: false, regulatoryApproval: 'Pending'      },
+  { id: 'drone-dfw-rural',    name: 'DFW → Rural Texas',         originHubId: 'hub-dal-01', originCity: 'Irving',  destinationZone: 'Rural TX (50mi)', distanceMiles: 48.0, maxPayloadKg: 2.0, avgFlightMins: 65, supportsColdChain: true,  altitudeFeet: 500, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+  { id: 'drone-la-inland',    name: 'LA → Inland Empire',        originHubId: 'hub-la-01',  originCity: 'Gardena', destinationZone: 'Riverside, CA',   distanceMiles: 52.0, maxPayloadKg: 2.0, avgFlightMins: 72, supportsColdChain: true,  altitudeFeet: 600, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+  { id: 'drone-mia-rural',    name: 'Miami → Rural S. Florida',  originHubId: 'hub-mia-01', originCity: 'Doral',   destinationZone: 'Homestead, FL',   distanceMiles: 28.0, maxPayloadKg: 2.5, avgFlightMins: 38, supportsColdChain: true,  altitudeFeet: 400, isActive: true,  regulatoryApproval: 'FAA_Part_135' },
+];
+
+export const INITIAL_CITY_EXPANSIONS: CityExpansion[] = [
+  { cityName: 'New York City',  state: 'NY', tier: 'Tier1_Metro',  population: 8335000, launchStatus: 'Live',        launchDate: '2026-01-01', activePharmacies: 148, activePatients: 42800, monthlyGmv: 1120400, hubWarehouseId: 'hub-nyc-01' },
+  { cityName: 'Los Angeles',    state: 'CA', tier: 'Tier1_Metro',  population: 3979576, launchStatus: 'Live',        launchDate: '2026-02-15', activePharmacies: 134, activePatients: 38200, monthlyGmv: 984000,  hubWarehouseId: 'hub-la-01'  },
+  { cityName: 'Chicago',        state: 'IL', tier: 'Tier1_Metro',  population: 2696555, launchStatus: 'Live',        launchDate: '2026-03-01', activePharmacies: 112, activePatients: 29400, monthlyGmv: 740000,  hubWarehouseId: 'hub-chi-01' },
+  { cityName: 'Dallas',         state: 'TX', tier: 'Tier1_Metro',  population: 1343573, launchStatus: 'Live',        launchDate: '2026-04-10', activePharmacies: 84,  activePatients: 18600, monthlyGmv: 492000,  hubWarehouseId: 'hub-dal-01' },
+  { cityName: 'Miami',          state: 'FL', tier: 'Tier1_Metro',  population: 471000,  launchStatus: 'Live',        launchDate: '2026-05-01', activePharmacies: 76,  activePatients: 14200, monthlyGmv: 381000,  hubWarehouseId: 'hub-mia-01' },
+  { cityName: 'Houston',        state: 'TX', tier: 'Tier1_Metro',  population: 2304580, launchStatus: 'Soft_Launch', launchDate: '2026-10-01', activePharmacies: 28,  activePatients: 4100,  monthlyGmv: 92000                                  },
+  { cityName: 'Phoenix',        state: 'AZ', tier: 'Tier1_Metro',  population: 1608139, launchStatus: 'Soft_Launch', launchDate: '2026-11-15', activePharmacies: 18,  activePatients: 2400,  monthlyGmv: 58000                                  },
+  { cityName: 'Philadelphia',   state: 'PA', tier: 'Tier1_Metro',  population: 1603797, launchStatus: 'Planned',     launchDate: '2027-01-15', activePharmacies: 0,   activePatients: 0,     monthlyGmv: 0                                      },
+  { cityName: 'San Antonio',    state: 'TX', tier: 'Tier2_City',   population: 1434625, launchStatus: 'Planned',     launchDate: '2027-02-01', activePharmacies: 0,   activePatients: 0,     monthlyGmv: 0                                      },
+  { cityName: 'San Diego',      state: 'CA', tier: 'Tier2_City',   population: 1386932, launchStatus: 'Planned',     launchDate: '2027-03-01', activePharmacies: 0,   activePatients: 0,     monthlyGmv: 0                                      },
+  { cityName: 'Austin',         state: 'TX', tier: 'Tier2_City',   population: 978908,  launchStatus: 'Announced',   launchDate: '2027-04-01', activePharmacies: 0,   activePatients: 0,     monthlyGmv: 0                                      },
+  { cityName: 'Jacksonville',   state: 'FL', tier: 'Tier2_City',   population: 911507,  launchStatus: 'Announced',   launchDate: '2027-05-01', activePharmacies: 0,   activePatients: 0,     monthlyGmv: 0                                      },
+];
+
+export const INITIAL_MICROSERVICES: MicroserviceHealth[] = [
+  { serviceId: 'svc-catalog-01',   serviceName: 'Catalog & Search Service',     version: 'v4.1.2', tier: 'Edge',           status: 'Healthy',  requestsPerSec: 18420, p99LatencyMs: 12,  p50LatencyMs: 4,  errorRate: 0.001,  cpuPercent: 38, memoryPercent: 44, replicaCount: 12, deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 3  * 86400000).toISOString(), uptime: '99.98%', sustainedThroughputCapacity: 250000, technology: 'TypeScript / Node.js + Redis Edge Cache'             },
+  { serviceId: 'svc-order-01',     serviceName: 'Order & Buy-Box Engine',       version: 'v4.0.8', tier: 'Core',           status: 'Healthy',  requestsPerSec: 8840,  p99LatencyMs: 28,  p50LatencyMs: 8,  errorRate: 0.002,  cpuPercent: 52, memoryPercent: 61, replicaCount: 8,  deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 7  * 86400000).toISOString(), uptime: '99.97%', sustainedThroughputCapacity: 150000, technology: 'Go 1.22 + PostgreSQL / Redis Sentinel'               },
+  { serviceId: 'svc-insurance-01', serviceName: 'Insurance & Billing Ledger',   version: 'v4.0.3', tier: 'Core',           status: 'Healthy',  requestsPerSec: 2140,  p99LatencyMs: 85,  p50LatencyMs: 42, errorRate: 0.001,  cpuPercent: 29, memoryPercent: 38, replicaCount: 4,  deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 2  * 86400000).toISOString(), uptime: '99.99%', sustainedThroughputCapacity: 50000,  technology: 'TypeScript / Node.js (PCI-DSS L1 + HIPAA)'           },
+  { serviceId: 'svc-iot-01',       serviceName: 'IoT Cold-Chain Gateway',       version: 'v2.8.1', tier: 'Infrastructure', status: 'Healthy',  requestsPerSec: 42000, p99LatencyMs: 6,   p50LatencyMs: 2,  errorRate: 0.0001, cpuPercent: 21, memoryPercent: 28, replicaCount: 6,  deploymentTarget: 'Lambda',     region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 14 * 86400000).toISOString(), uptime: '99.995%',sustainedThroughputCapacity: 500000, technology: 'Rust 1.79 + MQTT / TimescaleDB'                       },
+  { serviceId: 'svc-fhir-01',      serviceName: 'FHIR EHR Integration Gateway', version: 'v3.2.0', tier: 'Core',           status: 'Healthy',  requestsPerSec: 480,   p99LatencyMs: 142, p50LatencyMs: 68, errorRate: 0.003,  cpuPercent: 18, memoryPercent: 24, replicaCount: 3,  deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 1  * 86400000).toISOString(), uptime: '99.94%', sustainedThroughputCapacity: 20000,  technology: 'TypeScript / HL7 FHIR R4 SDK'                        },
+  { serviceId: 'svc-ddi-01',       serviceName: 'Gemini AI DDI Safety Engine',  version: 'v3.1.0', tier: 'Core',           status: 'Healthy',  requestsPerSec: 920,   p99LatencyMs: 380, p50LatencyMs: 140,errorRate: 0.002,  cpuPercent: 44, memoryPercent: 58, replicaCount: 4,  deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 5  * 86400000).toISOString(), uptime: '99.91%', sustainedThroughputCapacity: 30000,  technology: 'TypeScript + Google Gemini 2.5 Flash API'            },
+  { serviceId: 'svc-3pl-01',       serviceName: '3PL Logistics Hub',            version: 'v2.5.4', tier: 'Infrastructure', status: 'Degraded', requestsPerSec: 1240,  p99LatencyMs: 210, p50LatencyMs: 88, errorRate: 0.012,  cpuPercent: 71, memoryPercent: 82, replicaCount: 3,  deploymentTarget: 'Kubernetes', region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 18 * 86400000).toISOString(), uptime: '99.85%', sustainedThroughputCapacity: 40000,  technology: 'TypeScript + Dunzo / Shadowfax / FedEx adapters'     },
+  { serviceId: 'svc-eventbus-01',  serviceName: 'Event Bus (Kafka MSK)',        version: 'v3.6.1', tier: 'Infrastructure', status: 'Healthy',  requestsPerSec: 84000, p99LatencyMs: 8,   p50LatencyMs: 3,  errorRate: 0.00005,cpuPercent: 31, memoryPercent: 46, replicaCount: 9,  deploymentTarget: 'ECS',        region: 'us-east-1',   lastDeployedAt: new Date(Date.now() - 21 * 86400000).toISOString(), uptime: '99.999%',sustainedThroughputCapacity: 1000000,technology: 'Apache Kafka 3.7 on AWS MSK'                          },
+  { serviceId: 'svc-cdn-01',       serviceName: 'Patient Web App CDN',          version: 'v4.0.0', tier: 'Edge',           status: 'Healthy',  requestsPerSec: 22000, p99LatencyMs: 18,  p50LatencyMs: 6,  errorRate: 0.0003, cpuPercent: 15, memoryPercent: 18, replicaCount: 48, deploymentTarget: 'CloudRun',   region: 'multi-region',lastDeployedAt: new Date(Date.now() - 3  * 86400000).toISOString(), uptime: '99.99%', sustainedThroughputCapacity: 500000, technology: 'React 19 / Vite + Cloudflare Workers'                },
+];
+
+export const INITIAL_KAFKA_TOPICS: KafkaTopic[] = [
+  { name: 'orders',        partitions: 12, replicationFactor: 3, retentionMs: 604800000,  subscribedServices: ['order-service','insurance-service','notification-service'],  messageCount: 48291, bytesPerSec: 12400 },
+  { name: 'prescriptions', partitions: 8,  replicationFactor: 3, retentionMs: 604800000,  subscribedServices: ['rx-audit-service','ddi-engine','pharmacist-queue'],           messageCount: 18842, bytesPerSec: 8200  },
+  { name: 'telemetry',     partitions: 24, replicationFactor: 3, retentionMs: 86400000,   subscribedServices: ['iot-gateway','cold-chain-monitor','logistics-service'],        messageCount: 924810,bytesPerSec: 84000 },
+  { name: 'payments',      partitions: 6,  replicationFactor: 3, retentionMs: 2592000000, subscribedServices: ['escrow-service','insurance-service','settlement-ledger'],      messageCount: 12041, bytesPerSec: 4800  },
+  { name: 'inventory',     partitions: 8,  replicationFactor: 3, retentionMs: 259200000,  subscribedServices: ['catalog-service','buy-box-engine','replenishment-service'],    messageCount: 82104, bytesPerSec: 18600 },
+  { name: 'logistics',     partitions: 10, replicationFactor: 3, retentionMs: 172800000,  subscribedServices: ['3pl-hub','iot-gateway','drone-service','rider-companion'],      messageCount: 44210, bytesPerSec: 9200  },
+];

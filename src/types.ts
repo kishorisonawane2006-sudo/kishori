@@ -23,7 +23,11 @@ export type PortalTab =
   | 'fhir-ehr'
   | 'ddi-engine'
   | 'voice-search'
-  | 'wholesale-marketplace';
+  | 'wholesale-marketplace'
+  // Phase 4 — Insurance, Hub Logistics, Microservices tabs
+  | 'insurance-adjudication'
+  | 'hub-logistics'
+  | 'microservice-architecture';
 
 export type PatientTab = 'discover' | 'price-compare' | 'cart' | 'my-orders' | 'order-history' | 'profile';
 
