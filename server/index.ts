@@ -1,0 +1,85 @@
+import express, { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
+import catalogRoutes from './routes/catalogRoutes';
+import pricingRoutes from './routes/pricingRoutes';
+import orderRoutes from './routes/orderRoutes';
+import prescriptionRoutes from './routes/prescriptionRoutes';
+import tenantRoutes from './routes/tenantRoutes';
+import telemetryRoutes from './routes/telemetryRoutes';
+import { errorHandler } from './middleware/errorHandler';
+import { storage } from './services/storageService';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Body Parsers
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS & Security Headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-tenant-id');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
+// Request Performance & Access Logger
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = performance.now();
+  res.on('finish', () => {
+    const duration = (performance.now() - start).toFixed(2);
+    console.log(`[API] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+  });
+  next();
+});
+
+// Platform Health & Metadata Check
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'HEALTHY',
+    service: 'Generic Medicine Store & Multi-Tenant Modular Monolith',
+    version: '1.4.0',
+    phase: 'Phase 1: MVP Core Marketplace Foundation',
+    timestamp: new Date().toISOString(),
+    metrics: {
+      activeTenants: storage.getTenants().length,
+      activeOrders: storage.getOrders().length,
+      activeCatalogListings: storage.getListings().length
+    }
+  });
+});
+
+// Mount Subsystem API Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/catalog', catalogRoutes);
+app.use('/api/v1/pricing', pricingRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/cart', orderRoutes);
+app.use('/api/v1/prescriptions', prescriptionRoutes);
+app.use('/api/v1/tenant', tenantRoutes);
+app.use('/api/v1/telemetry', telemetryRoutes);
+
+// Centralized Error Handling Middleware
+app.use(errorHandler);
+
+// Start Server if directly executed
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`Generic Medicine Store Modular Monolith Server Active`);
+    console.log(`Listening on http://localhost:${PORT}`);
+    console.log(`Health Check: http://localhost:${PORT}/health`);
+    console.log(`Phase 1 Architecture: Multi-Tenant Schema Isolation Enabled`);
+    console.log(`=======================================================`);
+  });
+}
+
+export default app;

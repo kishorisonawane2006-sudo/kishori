@@ -17,6 +17,7 @@ import {
   ASSET_IMAGES
 } from './data/initialData';
 import { INITIAL_USER } from './data/userData';
+import { api } from './services/api';
 
 // Global Navigation
 import { NavigationHeader } from './components/NavigationHeader';
@@ -108,6 +109,11 @@ export default function App() {
     if (activeTrackingOrder.id === orderId) {
       setActiveTrackingOrder((prev) => ({ ...prev, status: newStatus }));
     }
+    fetch(`/api/v1/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    }).catch(() => { /* silent fallback */ });
   };
 
   // Handler to update listing price (Buy-Box Repricing)
@@ -126,6 +132,7 @@ export default function App() {
         return l;
       })
     );
+    api.updateTenantListing(listingId, { unitPrice: newPrice }, 'apollo').catch(() => { /* silent fallback */ });
   };
 
   // Handler to add new generic listing
