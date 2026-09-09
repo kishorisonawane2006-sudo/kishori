@@ -20,8 +20,8 @@ gantt
     section Phase 1: MVP Core
     Patient Marketplace & Discovery       :done,    des1, 2026-01, 2026-05
     Multi-Tenant Pharmacy SaaS Portal    :done,    des2, 2026-04, 2026-07
-    Dual-Stage Rx & Buy-Box Engine       :active,  des3, 2026-07, 2026-09
-    Production Hardening & Launch         :active,  des4, 2026-08, 2026-09
+    Dual-Stage Rx & Buy-Box Engine       :done,    des3, 2026-07, 2026-09
+    Production Hardening & Launch         :done,    des4, 2026-08, 2026-09
     section Phase 2: Logistics & Mobile
     3PL Carrier API Integrations          :         des5, 2026-10, 2026-11
     Live IoT Cold-Chain Hardware Sync    :         des6, 2026-10, 2026-12
@@ -51,8 +51,8 @@ gantt
 ## 2. Phase 1: MVP & Core Marketplace Foundation
 
 **Target Timeline:** January 2026 – September 2026  
-**Status:** In Final Verification & Production Hardening  
-**Target Milestone:** Release `v1.4.0`  
+**Status:** ✅ Complete — Production Hardened  
+**Target Milestone:** Release `v1.4.0` ✅  
 **Primary Goal:** Establish the patient-facing generic discovery engine, secure dual-stage prescription verification, multi-tenant pharmacy SaaS portal with schema-level data isolation, and algorithmic Buy-Box price competition.
 
 ### 2.1 Scope & Workstream Deliverables

@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 | Version | Release Date | Primary Focus | Key Deliverables | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **[Unreleased]** | Future | EHR & 3PL Integration | FHIR/HL7 direct ingest, automated courier webhooks | Planned |
-| **[2.4.0]** | 2026-09-09 | Architecture & AI Context | In-app PRD, Architecture visualizer, AI context docs | Active / Current |
+| **[1.4.0]** | 2026-09-09 | Phase 1 Production Hardening | Shared utils, common components, env config, quality gates | Active / Current |
+| **[2.4.0]** | 2026-09-09 | Architecture & AI Context | In-app PRD, Architecture visualizer, AI context docs | Verified |
 | **[2.3.0]** | 2026-09-06 | Authentication & Profile | Health profile, insurance BIN/PCN, multi-role auth | Verified |
 | **[2.2.0]** | 2026-09-03 | Multi-Tenant Portal | Pharmacy operations, order Kanban, vendor repricing | Verified |
 | **[2.1.0]** | 2026-08-30 | Price Comparison & Cart | Salt vs brand comparison, savings badges, Rx upload | Verified |
@@ -36,6 +37,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 - Deprecated legacy manual order dispatch status polling once webhook consumers are active.
+
+---
+
+## [1.4.0] - 2026-09-09
+
+### Added
+
+**`src/utils/` — Pure Utility Library (new directory)**
+- `formatters.ts`: 19 pure utility functions with zero React dependencies:
+  - Currency: `formatCurrency()`, `formatCompactCurrency()` (compact dashboard GMV display)
+  - Savings: `calculateSavingsAmount()`, `calculateSavingsPercent()`, `isHighSavings()` (≥40% threshold)
+  - Cold-chain: `isColdChainOptimal()`, `isColdChainBreached()`, `formatTemperature()`, `getColdChainStatusLabel()`
+  - Formatting: `formatPercent()`, `formatDate()`, `formatRelativeDate()`
+  - PHI masking (ADR-010): `maskPhone()` (last 4 digits preserved), `maskEmail()` (domain visible only)
+  - Drug labels: `formatDosageLabel()`, `normalizeDrugName()`, `getPrimaryActiveSalt()`
+  - Math helpers: `clamp()`, `round()`
+- `buyBoxHelpers.ts`: Frontend-mirrored Buy-Box scoring (ADR-004):
+  - `computeBuyBoxScore()` — weighted composite score (0.70 price + 0.20 stock + 0.10 proximity)
+  - `findBuyBoxWinner()` — selects winning listing index from active candidates
+  - `calculateRepricedUnit()` — floor-price-aware repricing projection
+- `index.ts`: Barrel export for clean single-import access across the codebase
+
+**`src/components/common/` — Shared Presentational Atoms (new directory)**
+- `SavingsBadge.tsx`: Dual-variant (pill / card) savings display; per rules.md §4.2 every medicine card must show brand MRP, generic price, and percentage saved
+- `BioEquivalenceBadge.tsx`: Classifies and renders FDA Orange Book AB / CDSCO Approved / Pending ratings with semantic color tier mapping
+- `ColdChainBadge.tsx`: Dual-variant (pill / panel) cold-chain temperature indicator with live-pulse animation; uses rose-600 for breach, emerald-600 for optimal per ADR-012
+- `EmptyState.tsx`: Accessible empty state with `role="status"` and `aria-live="polite"` for search, cart, orders, and inventory views per rules.md §1.3
+- `OrderStatusBadge.tsx`: Color-coded lifecycle status pill mapping all 8 `PlatformOrder.status` values to semantic design tokens
+- `RxRequiredBadge.tsx`: Dual-variant (pill / banner) Rx requirement indicator; amber for Schedule H, emerald for OTC per ADR-012
+- `LoadingSpinner.tsx`: Accessible spinner (sm/md/lg) for async operations including Gemini OCR cold-start (2.5–4s)
+- `index.ts`: Barrel export for all common components
+
+**Project Configuration**
+- `package.json`: Corrected project `name` from `react-example` to `generic-medicine-store`; bumped `version` to `1.4.0` aligning with Phase 1 milestone target
+- `.env.example`: Expanded from 2 variables to 26 documented environment variables covering all subsystems:
+  - AI/OCR: `GEMINI_API_KEY`, `VITE_GEMINI_API_KEY`
+  - Server: `PORT`, `NODE_ENV`, `APP_URL`, `VITE_API_BASE_URL`
+  - Auth (ADR-010): `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`, `JWT_EXPIRES_IN_SECONDS`
+  - Database (ADR-001): `DATABASE_URL`, `DATABASE_POOL_MAX`
+  - Redis (ADR-004): `REDIS_URL`, `REDIS_SENTINEL_MASTER`, `BUY_BOX_CACHE_TTL_SECONDS`
+  - Storage (ADR-010): `PRESCRIPTION_BUCKET_NAME`, `CLOUD_STORAGE_REGION`, `PRESCRIPTION_URL_TTL_SECONDS`
+  - Payments (ADR-007): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+  - IoT (ADR-008): `MQTT_BROKER_URL`, `MQTT_USERNAME`, `MQTT_PASSWORD`
+  - Feature flags: `ENABLE_GEMINI_OCR`, `ENABLE_LIVE_DATABASE`, `ENABLE_REDIS_BUY_BOX`, `DISABLE_HMR`
+
+### Verified
+
+- **Phase 1 Quality Gates: 11/11 PASS** (`npm run test:phase1`)
+  - Gate 1–3: Multi-tenant schema isolation — zero cross-tenant data leakage (ADR-001)
+  - Gate 4–6: Buy-Box scoring accuracy + sub-50ms SLA (0.13ms actual) + floor-price enforcement (ADR-004)
+  - Gate 7–8: Dual-stage Rx pipeline — OCR extraction + pharmacist sign-off advancing order to `Dispensing` (ADR-005)
+  - Gate 9–10: Cold-chain telemetry — optimal recording + automatic breach quarantine & re-dispatch (ADR-008)
+  - Gate 11: Savings matrix accuracy — 80% savings confirmed ($42 brand MRP → $8.40 generic) (ADR-003)
+- **TypeScript lint: zero errors** (`npm run lint` / `tsc --noEmit`)
 
 ---
 

@@ -4,7 +4,7 @@
 **Codebase Identifier:** `generic-medicine-store` (`kishori`)  
 **Domain:** Healthcare E-Commerce, Generic Drug Price Comparison & Pharmacy SaaS  
 **Document Status:** Living Document / Active Context  
-**Last Synchronized:** 2026-09-09  
+**Last Synchronized:** 2026-09-09 (Phase 1 production hardening — v1.4.0)  
 
 ---
 
@@ -278,16 +278,33 @@ The listing with the highest composite score wins the primary `winning` badge an
 
 ## 8. Known Issues & Technical Debt
 
-1. **Mock Data to Live PostgreSQL Connection:** The frontend currently renders from robust mock fixtures in `src/data/initialData.ts`. Transitioning to production requires activating environment variables (`VITE_API_BASE_URL`) and hooking React query hooks to Express routes.
+1. **Mock Data to Live PostgreSQL Connection:** The frontend currently renders from robust mock fixtures in `src/data/initialData.ts`. Transitioning to production requires activating environment variables (`VITE_API_BASE_URL`, `ENABLE_LIVE_DATABASE=true`) and hooking React query hooks to Express routes.
 2. **Offline Mobile State Sync:** If a patient loses network connectivity mid-checkout, the cart is stored in memory and may reset upon full page refresh. Needs IndexedDB/local storage persistence with encryption.
-3. **Prescription OCR Cold Start:** Initial Gemini AI OCR parsing call can take 2.5–4.0 seconds depending on image resolution. Requires asynchronous background processing with a polling/WebSocket status indicator.
+3. **Prescription OCR Cold Start:** Initial Gemini AI OCR parsing call can take 2.5–4.0 seconds depending on image resolution. Requires asynchronous background processing with a polling/WebSocket status indicator. A `LoadingSpinner` component has been added to `src/components/common/` in anticipation of this UI state.
+
+### 8.1 New Modules Added (v1.4.0)
+
+| Module | Path | Purpose |
+| :--- | :--- | :--- |
+| **Utility Library** | `src/utils/formatters.ts` | 19 pure functions: currency, savings, cold-chain, PHI masking, drug labels |
+| **Buy-Box Helpers** | `src/utils/buyBoxHelpers.ts` | Frontend Buy-Box scoring mirror of ADR-004 algorithm |
+| **Utils Barrel** | `src/utils/index.ts` | Clean single-import access for all utilities |
+| **SavingsBadge** | `src/components/common/SavingsBadge.tsx` | Pill/card savings display (rules.md §4.2 mandatory) |
+| **BioEquivalenceBadge** | `src/components/common/BioEquivalenceBadge.tsx` | FDA/CDSCO rating classifier with semantic tiers |
+| **ColdChainBadge** | `src/components/common/ColdChainBadge.tsx` | Live temp indicator; rose breach / emerald optimal (ADR-012) |
+| **EmptyState** | `src/components/common/EmptyState.tsx` | Accessible empty state with aria-live (rules.md §1.3) |
+| **OrderStatusBadge** | `src/components/common/OrderStatusBadge.tsx` | All 8 `PlatformOrder.status` values color-coded |
+| **RxRequiredBadge** | `src/components/common/RxRequiredBadge.tsx` | Schedule H / OTC indicator (ADR-005, ADR-012) |
+| **LoadingSpinner** | `src/components/common/LoadingSpinner.tsx` | Accessible spinner for OCR cold-start and API calls |
+| **Common Barrel** | `src/components/common/index.ts` | Single import for all common components |
 
 ---
 
 ## 9. Future Roadmap
 
-### Phase 1: MVP Marketplace & Multi-Tenant Foundation (Current: Q1–Q3 2026)
+### Phase 1: MVP Marketplace & Multi-Tenant Foundation (Complete: Q1–Q3 2026 → v1.4.0)
 - Complete patient discovery, price comparison, cart, order tracking, multi-tenant portal, repricing engine, and interactive PRD/architecture viewer.
+- ✅ **v1.4.0 production hardening:** Shared utility library (`src/utils/`), common component atoms (`src/components/common/`), full environment variable documentation (`.env.example`), package metadata corrected. All 11 Phase 1 quality gates passing.
 
 ### Phase 2: Logistics Integration & Mobile Native Apps (Q4 2026)
 - Integration with Dunzo, Shadowfax, and FedEx Healthcare APIs.
